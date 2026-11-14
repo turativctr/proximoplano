@@ -10,67 +10,56 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
-import { TEMA_LABEL, TEMA_SWATCH, TEMA_VALUES } from "@/lib/theme";
+import { TEMA_LABEL, TEMA_DESCRIPTION, TEMA_VALUES } from "@/lib/theme";
 import { applyTheme, useCurrentTheme } from "@/lib/use-theme";
 import { cn } from "@/lib/utils";
 
-/** Amostra grande — cartão inteiro pinta com o page-bg do tema, 4 chips de cor em vez de 1.
- *
- *  Onda 3 — PARTE 4: a v2 (onda 2) mostrava só o accent de Planejamento, que é azul em quase
- *  todo tema — 8 dos 10 cartões pareciam iguais, a amostra escolheu justo a cor que MENOS varia.
- *  Agora são 4 chips: a cor CARACTERÍSTICA do gênero (--characteristic, ver TEMA_SWATCH — é o
- *  cromo do Horror/Thriller, o ciano do Experimental, ou o próprio pageBg quando o tema não tem
- *  cromo próprio), Planejamento, Orçamento e Erro. Cada chip leva borda própria (não só a maior)
- *  porque um chip characteristic=pageBg fica em cima do próprio fundo do cartão — sem borda,
- *  ficaria invisível. */
-function TemaCard({
-  tema,
-  selected,
-  onSelect,
-}: {
+/** Miniatura da interface real: mesma superfície, moldura e cores funcionais do tema. */
+function TemaCard({ tema, selected, onSelect }: {
   tema: Tema;
   selected: boolean;
   onSelect: () => void;
 }) {
-  const swatch = TEMA_SWATCH[tema];
-  const chips: Array<{ key: string; color: string }> = [
-    { key: "characteristic", color: swatch.characteristic },
-    { key: "planejamento", color: swatch.planejamento },
-    { key: "orcamento", color: swatch.orcamento },
-    { key: "erro", color: swatch.erro },
-  ];
   return (
     <button
       type="button"
+      data-theme={tema.toLowerCase()}
+      aria-label={`Usar tema ${TEMA_LABEL[tema]}`}
+      aria-pressed={selected}
       onClick={onSelect}
       className={cn(
-        "relative flex flex-col items-center gap-2 rounded-lg border-2 p-3 transition-colors",
-        selected ? "border-foreground" : "border-transparent hover:border-muted-foreground/30"
+        "theme-choice relative overflow-hidden rounded-xl border-2 bg-background text-left text-foreground transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        selected ? "border-foreground shadow-md" : "border-border hover:shadow-md"
       )}
-      style={{ backgroundColor: swatch.pageBg }}
     >
-      {selected && (
-        <span
-          className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded-full"
-          style={{ backgroundColor: swatch.text }}
-        >
-          <Check className="h-3 w-3" style={{ color: swatch.pageBg }} />
+      <span aria-hidden="true" className="flex h-20 border-b border-border sm:h-24">
+        <span className="theme-chrome flex w-9 shrink-0 flex-col gap-2 border-r-[length:var(--chrome-border-width)] border-[rgb(var(--chrome-border))] p-2">
+          <span className="h-2 w-2 rounded-sm bg-foreground" />
+          <span className="h-1 w-full rounded bg-scheduling-accent" />
+          <span className="h-1 w-full rounded bg-budgeting-accent" />
+          <span className="h-1 w-full rounded bg-drafts-accent" />
         </span>
-      )}
-      <span className="flex gap-1">
-        {chips.map((chip) => (
-          <span
-            key={chip.key}
-            className="h-4 w-4 rounded-full border border-black/10 shadow-sm"
-            style={{ backgroundColor: chip.color }}
-          />
-        ))}
+        <span className="flex min-w-0 flex-1 flex-col">
+          <span className="theme-chrome h-4 border-b-[length:var(--chrome-border-width)] border-[rgb(var(--chrome-border))]" />
+          <span className="grid flex-1 grid-cols-2 gap-1.5 p-2">
+            <span className="rounded border-l-[3px] border-scheduling-accent bg-scheduling-bg" />
+            <span className="rounded border-l-[3px] border-budgeting-accent bg-budgeting-bg" />
+            <span className="rounded border-l-[3px] border-drafts-accent bg-drafts-bg" />
+            <span className="rounded border-l-[3px] border-decupagem-accent bg-decupagem-bg" />
+          </span>
+        </span>
       </span>
-      <span className="text-xs font-medium" style={{ color: swatch.text }}>
-        {TEMA_LABEL[tema]}
+      <span className="block px-3 py-2.5">
+        <span className="flex items-center justify-between gap-1 text-sm font-semibold">
+          {TEMA_LABEL[tema]}
+          {selected && <Check aria-hidden="true" className="h-4 w-4 shrink-0" />}
+        </span>
+        <span className="mt-1 block min-h-8 text-xs text-muted-foreground">{TEMA_DESCRIPTION[tema]}</span>
       </span>
     </button>
   );
@@ -113,14 +102,20 @@ export function ThemeSelector() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <Button variant="ghost" size="icon" title="Tema" disabled={pending} onClick={() => setOpen(true)}>
-        <Palette className="h-4 w-4" />
-      </Button>
-      <DialogContent className="max-w-xl">
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="icon" title="Tema" aria-label="Escolher tema" disabled={pending}>
+          <Palette className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90dvh] max-w-5xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Escolher tema</DialogTitle>
+          <DialogDescription>
+            Escolha o clima da sua tela. Salvo no seu perfil, para todos os projetos.
+            Azul planeja, verde organiza o orçamento, roxo identifica o roteiro e teal a decupagem.
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {TEMA_VALUES.map((tema) => (
             <TemaCard
               key={tema}

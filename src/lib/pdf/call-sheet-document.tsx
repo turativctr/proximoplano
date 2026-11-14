@@ -1,3 +1,4 @@
+import { Fragment, type ComponentProps } from "react";
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import { formatFullDate, weekdayNameFull } from "@/lib/calendar-grid";
@@ -30,7 +31,18 @@ import { resolveSinopseAD } from "@/lib/scene-sinopse";
 import { formatHHh, formatHHhOrDash, minutesToTime, timeToMinutes } from "@/lib/schedule";
 import { HEAVY_RESETS, PRIORIDADE_INICIAL, RESET_LABEL } from "@/lib/shots-shared";
 
-// Colunas das tabelas de cena (Folha 1 "Cenas do Dia" e Folha 2 "Escaleta do AD"), em PONTOS.
+/** O invólucro sem `fixed` mantém a linha inteira no paginador do react-pdf.
+ *  Tr repassa fixed mesmo indefinido; a presença dessa prop faz o motor ignorar a quebra
+ *  antes da linha. Correção local à OD, sem alterar os outros documentos que usam o kit. */
+function CallSheetRow(props: ComponentProps<typeof Tr>) {
+  return (
+    <View wrap={false} minPresenceAhead={props.minPresenceAhead} style={{ width: "100%" }}>
+      <Tr {...props} />
+    </View>
+  );
+}
+
+// Colunas das tabelas de cena ("Cenas do Dia" e "Escaleta do AD"), em PONTOS.
 // Toda coluna de conteúdo curto mas variável tem largura fixa, medida pelo PIOR valor possível em
 // Helvetica 8.5 + os 8pt de padding da célula (que são o espaço entre colunas) + folga — nunca
 // porcentagem: texto que não cabe na célula não quebra pra baixo nem empurra a vizinha, desenha
@@ -115,7 +127,7 @@ const styles = StyleSheet.create({
   estimadoMark: { color: colors.medGray },
   estimadoFootnote: { fontSize: 7, color: colors.medGray, marginTop: 3, fontStyle: "italic" },
 
-  // ---- Folha 3 "Hora a Hora com Planos" — caixa por cena + sub-linhas de plano ----
+  // ---- Seção "Hora a Hora com Planos" — caixa por cena + sub-linhas de plano ----
   hhBoxHeader: {
     backgroundColor: colors.lightGray,
     paddingVertical: 3,
@@ -170,8 +182,8 @@ function MealsFooterRow({ total, cafe, almoco }: { total: number; cafe: number; 
   );
 }
 
-/** Linha de "CENAS DO DIA" da Folha 1 — versão resumida (sem SINOPSE, sem sub-linhas de plano) desde
- *  que o detalhe de sinopse foi pra Folha 2 (Escaleta do AD) e o detalhe de plano foi pra Folha 3
+/** Linha de "CENAS DO DIA" — versão resumida (sem SINOPSE, sem sub-linhas de plano) desde
+ *  que o detalhe de sinopse foi para Escaleta do AD e o detalhe de plano para Hora a Hora
  *  (Hora a Hora com Planos). Larguras em COL — SET fica com todo o espaço que sobra. */
 function SceneRow({
   scene,
@@ -183,7 +195,7 @@ function SceneRow({
   project: ShootDayReportData["project"];
 }) {
   return (
-    <Tr alt={alt}>
+    <CallSheetRow alt={alt}>
       <Td width={COL.cena}>{scene.numero}</Td>
       <Td width={COL.tipo}>{scene.tipo ?? "—"}</Td>
       <Td width={COL.periodo}>{scene.periodo ?? "—"}</Td>
@@ -202,11 +214,11 @@ function SceneRow({
         start={scene.schedule ? formatHHh(scene.schedule.rodStart) : null}
         end={scene.schedule ? formatHHh(scene.schedule.rodEnd) : null}
       />
-    </Tr>
+    </CallSheetRow>
   );
 }
 
-/** Linha de "ESCALETA DO AD" (Folha 2) — o CENAS DO DIA original pré-corte, com a sinopse operacional
+/** Linha de "ESCALETA DO AD" — o CENAS DO DIA original pré-corte, com a sinopse operacional
  *  curta do AD (resolveSinopseAD, com fallback pra sinopse do roteiro truncada) em vez da sinopse crua. */
 function SceneRowAD({
   scene,
@@ -218,7 +230,7 @@ function SceneRowAD({
   project: ShootDayReportData["project"];
 }) {
   return (
-    <Tr alt={alt}>
+    <CallSheetRow alt={alt}>
       <Td width={COL.cena}>{scene.numero}</Td>
       <Td width={COL.tipo}>{scene.tipo ?? "—"}</Td>
       <Td width={COL.periodo}>{scene.periodo ?? "—"}</Td>
@@ -238,7 +250,7 @@ function SceneRowAD({
         start={scene.schedule ? formatHHh(scene.schedule.rodStart) : null}
         end={scene.schedule ? formatHHh(scene.schedule.rodEnd) : null}
       />
-    </Tr>
+    </CallSheetRow>
   );
 }
 
@@ -249,12 +261,12 @@ function SceneObservacoesRow({ scene }: { scene: ShootDayReportData["scenes"][nu
   if (!scene.observacoes) return null;
 
   return (
-    <Tr wrap={false}>
+    <CallSheetRow wrap={false}>
       <Td width="5%" />
       <Td width="95%">
         <Text style={styles.sceneObsText}>Obs.: {scene.observacoes}</Text>
       </Td>
-    </Tr>
+    </CallSheetRow>
   );
 }
 
@@ -289,18 +301,18 @@ function ShotScheduleRows({
         const descartado = entry.status === "DESCARTADO";
 
         return (
-          <View key={entry.id} style={{ width: "100%" }}>
+          <View key={entry.id} style={{ width: "100%" }} wrap={false}>
             {chegada && chegada.tipoReset !== "NENHUM" && chegada.tipoReset !== "AJUSTE" && (
-              <Tr bg={colors.rowAlt} wrap={false}>
+              <CallSheetRow bg={colors.rowAlt} wrap={false}>
                 <Td width="10%" />
                 <Td width="90%">
                   <Text style={{ fontSize: 7, color: resetDividerColor(chegada.tipoReset) }}>
                     +{chegada.tempoResetMin ?? 0}min {RESET_LABEL[chegada.tipoReset].toLowerCase()}
                   </Text>
                 </Td>
-              </Tr>
+              </CallSheetRow>
             )}
-            <Tr
+            <CallSheetRow
               alt={i % 2 === 1}
               bg={
                 chegada?.tipoReset === "RESET_COMPLETO"
@@ -334,7 +346,7 @@ function ShotScheduleRows({
               <Td width="15%" align="center">
                 {entry.tempoTotalMin}min ({entry.takesPrevistos}T)
               </Td>
-            </Tr>
+            </CallSheetRow>
           </View>
         );
       })}
@@ -342,7 +354,7 @@ function ShotScheduleRows({
   );
 }
 
-/** Sub-linha de plano dentro de uma caixa da Folha 3 (Hora a Hora com Planos). Convenção de reset:
+/** Sub-linha de plano dentro de uma caixa de Hora a Hora (Hora a Hora com Planos). Convenção de reset:
  *  usa o tipoReset/tempoResetMin do PRÓPRIO plano iterado (não do anterior) quando `index > 0` — o
  *  mesmo critério do antigo ShotSubRows do Call Sheet, diferente de ShotScheduleRows acima (que usa
  *  o campo do item anterior por motivos específicos daquela tabela). O reset do plano `index === 0`
@@ -350,7 +362,9 @@ function ShotScheduleRows({
 function PlanoRowAD({
   plano,
   index,
+  sceneNumero,
 }: {
+  sceneNumero: string;
   plano: ShootDayReportData["horaAHoraPlanos"][number]["planos"][number];
   index: number;
 }) {
@@ -359,7 +373,7 @@ function PlanoRowAD({
   const descartado = plano.status === "DESCARTADO";
 
   return (
-    <View style={{ width: "100%" }}>
+    <View style={{ width: "100%" }} wrap={false}>
       {index > 0 && plano.tipoReset !== "NENHUM" && plano.tipoReset !== "AJUSTE" && (
         <View style={styles.hhResetRow} wrap={false}>
           <Text style={{ fontSize: 7, color: resetDividerColor(plano.tipoReset) }}>
@@ -384,7 +398,7 @@ function PlanoRowAD({
             textDecoration: descartado ? "line-through" : undefined,
           }}
         >
-          P{plano.numero} · {plano.tamanho || "—"} · {plano.movimento || "—"} · {plano.descricao} ·{" "}
+          Cena {sceneNumero} · P{plano.numero} · {plano.tamanho || "—"} · {plano.movimento || "—"} · {plano.descricao} ·{" "}
           {plano.takesPrevistos}T × {plano.tempoTotalMin}min
         </Text>
       </View>
@@ -392,31 +406,51 @@ function PlanoRowAD({
   );
 }
 
-/** Caixa de uma cena na Folha 3 — cabeçalho com os dados operacionais da cena (tipo, período,
- *  set/locação, sinopse do AD, elenco) seguido dos planos em ordem. `wrap={false}` mantém a caixa
- *  inteira junto ao virar página, no mesmo peso visual de outras seções com borda deste documento
- *  (ex.: styles.logisticsCol). */
+/** O cabeçalho acompanha o primeiro plano. Cenas extensas podem continuar na página seguinte,
+ *  sempre entre planos completos; prender a cena inteira causava páginas vazias e cortes.
+ *  Na cauda do documento, reserva espaço para as próximas linhas, evitando uma última folha
+ *  com um único plano. É uma indicação de presença, não um bloco indivisível de altura ilimitada. */
 function HoraAHoraBox({
   block,
   project,
+  keepTail,
+  hasFollowingBlock,
 }: {
+  keepTail: boolean;
+  hasFollowingBlock: boolean;
   block: ShootDayReportData["horaAHoraPlanos"][number];
   project: ShootDayReportData["project"];
 }) {
   const castLabel = block.cast.map((c) => getCharacterId(c, project)).join(", ") || "—";
 
   return (
-    <View style={{ borderWidth: 0.75, borderColor: colors.borderV2, marginBottom: 6 }} wrap={false}>
-      <View style={styles.hhBoxHeader}>
-        <Text style={styles.hhBoxHeaderText}>
-          Cena {block.numero} · {block.tipo ?? "—"} · {periodoAbrev(block.classeLuz)} · {block.setLocacaoDisplay} —{" "}
-          {block.sinopseAD || "—"} · {castLabel}
-        </Text>
+    <>
+      <View
+        wrap={false}
+        minPresenceAhead={keepTail && (block.planos.length > 1 || hasFollowingBlock) ? 200 : 0}
+        style={{ borderWidth: 0.75, borderColor: colors.borderV2, marginTop: 6 }}
+      >
+        <View style={styles.hhBoxHeader}>
+          <Text style={styles.hhBoxHeaderText}>
+            Cena {block.numero} · {block.tipo ?? "—"} · {periodoAbrev(block.classeLuz)} · {block.setLocacaoDisplay} —{" "}
+            {block.sinopseAD || "—"} · {castLabel}
+          </Text>
+        </View>
+        {block.planos[0] && <PlanoRowAD plano={block.planos[0]} index={0} sceneNumero={block.numero} />}
       </View>
-      {block.planos.map((plano, i) => (
-        <PlanoRowAD key={plano.id} plano={plano} index={i} />
+      {/* Protege os doze planos finais. Nunca exige espaço depois do último nó: o motor
+          reservaria uma área em branco em vez de apenas manter as próximas linhas juntas. */}
+      {block.planos.slice(1).map((plano, i) => (
+        <View
+          key={plano.id}
+          wrap={false}
+          minPresenceAhead={keepTail && block.planos.length > 3 && i === Math.max(0, block.planos.length - 13) ? 260 : 0}
+          style={{ borderWidth: 0.75, borderTopWidth: 0, borderColor: colors.borderV2 }}
+        >
+          <PlanoRowAD plano={plano} index={i + 1} sceneNumero={block.numero} />
+        </View>
       ))}
-    </View>
+    </>
   );
 }
 
@@ -475,7 +509,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
   return (
     <Document>
       {/* ---------------------------------------------------------------- */}
-      {/* Folha 1 — Ordem do Dia (logística, segurança, chamadas, cenas)   */}
+      {/* Ordem do Dia (logística, segurança, chamadas, cenas)   */}
       {/* ---------------------------------------------------------------- */}
       <Page size="A4" style={kit.pageV2}>
         <CallSheetHeader
@@ -580,7 +614,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
         <View style={styles.section}>
           <SectionTitle>ELENCO</SectionTitle>
           <Table>
-            <Tr header dark>
+            <CallSheetRow header dark>
               <Td width="8%">ID</Td>
               <Td width="16%">PERSONAGEM</Td>
               <Td width="18%">ATOR</Td>
@@ -597,9 +631,9 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
               <Td width="11%" align="center">
                 SAÍDA
               </Td>
-            </Tr>
+            </CallSheetRow>
             {castPresente.map((c, i) => (
-              <Tr key={c.id} alt={i % 2 === 1}>
+              <CallSheetRow key={c.id} alt={i % 2 === 1}>
                 <Td width="8%">{getCharacterId(c, project)}</Td>
                 <Td width="16%">{c.personagem}</Td>
                 <Td width="18%">{c.ator || "—"}</Td>
@@ -619,7 +653,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
                 <Td width="11%" align="center">
                   {formatHHhOrDash(c.saida)}
                 </Td>
-              </Tr>
+              </CallSheetRow>
             ))}
           </Table>
           <MealsFooterRow total={castMeals.total} cafe={castMeals.cafe} almoco={castMeals.almoco} />
@@ -632,7 +666,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
           <View style={styles.section}>
             <SectionTitle>FIGURAÇÃO</SectionTitle>
             <Table>
-              <Tr header dark>
+              <CallSheetRow header dark>
                 <Td width="30%">PERSONAGEM</Td>
                 <Td width="12%" align="center">
                   QTD.
@@ -644,9 +678,9 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
                 <Td width="15%" align="center">
                   SAÍDA
                 </Td>
-              </Tr>
+              </CallSheetRow>
               {extrasPresente.map((e, i) => (
-                <Tr key={e.id} alt={i % 2 === 1}>
+                <CallSheetRow key={e.id} alt={i % 2 === 1}>
                   <Td width="30%">{e.personagem}</Td>
                   <Td width="12%" align="center">
                     {e.quantidade}
@@ -658,7 +692,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
                   <Td width="15%" align="center">
                     {formatHHhOrDash(e.saida)}
                   </Td>
-                </Tr>
+                </CallSheetRow>
               ))}
             </Table>
             <MealsFooterRow total={extrasMeals.total} cafe={extrasMeals.cafe} almoco={extrasMeals.almoco} />
@@ -669,7 +703,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
           <SectionTitle>CENAS DO DIA</SectionTitle>
           {castLegend && <CastLegend entries={castLegend} />}
           <Table>
-            <Tr header dark>
+            <CallSheetRow header dark>
               <Td width={COL.cena}>CENA</Td>
               <Td width={COL.tipo}>INT/EXT</Td>
               <Td width={COL.periodo}>D/N</Td>
@@ -684,12 +718,12 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
               <Td width={COL.horario} align="center">
                 ROD
               </Td>
-            </Tr>
+            </CallSheetRow>
             {intercalar(manhaScenes, blocosManha).map((item, i) =>
               item.tipo === "bloco" ? (
                 <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
               ) : (
-                <View key={item.cena.sceneId} style={{ width: "100%" }}>
+                <View key={item.cena.sceneId} style={{ width: "100%" }} wrap={false}>
                   <SceneRow scene={item.cena} alt={i % 2 === 1} project={project} />
                   <SceneObservacoesRow scene={item.cena} />
                 </View>
@@ -707,7 +741,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
               item.tipo === "bloco" ? (
                 <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
               ) : (
-                <View key={item.cena.sceneId} style={{ width: "100%" }}>
+                <View key={item.cena.sceneId} style={{ width: "100%" }} wrap={false}>
                   <SceneRow scene={item.cena} alt={i % 2 === 1} project={project} />
                   <SceneObservacoesRow scene={item.cena} />
                 </View>
@@ -724,7 +758,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
             <SectionTitle>ORDEM DE FILMAGEM</SectionTitle>
             <PrioridadeLegend />
             <Table>
-              <Tr header dark>
+              <CallSheetRow header dark>
                 <Td width="10%" align="center">
                   HH
                 </Td>
@@ -737,7 +771,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
                 <Td width="15%" align="center">
                   TEMPO
                 </Td>
-              </Tr>
+              </CallSheetRow>
               <ShotScheduleRows schedule={shotSchedule} startTime={shootDay.blocoManhaInicio ?? shootDay.chamadaGeral} />
             </Table>
           </View>
@@ -757,22 +791,18 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
           )}
         </View>
 
-        <StandardFooter projectTitulo={project.titulo} documentName="Ordem do Dia" />
-      </Page>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Folha 2 — Escaleta do AD (todas as cenas, com sinopse operacional) */}
-      {/* ---------------------------------------------------------------- */}
-      <Page size="A4" style={kit.pageV2}>
-        <StandardHeader
-          projectTitulo={project.titulo}
-          diretor={project.diretor}
-          producao={project.producao}
-          documentTitle={escaletaTitle}
-        />
+        {/* As seções compartilham o fluxo para aproveitar o espaço restante da página. */}
+        <View minPresenceAhead={90} wrap={false} style={{ marginTop: 12 }}>
+          <StandardHeader
+            projectTitulo={project.titulo}
+            diretor={project.diretor}
+            producao={project.producao}
+            documentTitle={escaletaTitle}
+          />
+        </View>
 
         <Table>
-          <Tr header dark>
+          <CallSheetRow header dark>
             <Td width={COL.cena}>CENA</Td>
             <Td width={COL.tipo}>INT/EXT</Td>
             <Td width={COL.periodo}>D/N</Td>
@@ -788,7 +818,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
             <Td width={COL.horario} align="center">
               ROD
             </Td>
-          </Tr>
+          </CallSheetRow>
           {intercalar(manhaScenes, blocosManha).map((item, i) =>
             item.tipo === "bloco" ? (
               <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
@@ -816,19 +846,14 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
           )}
         </Table>
 
-        <StandardFooter projectTitulo={project.titulo} documentName="Escaleta do AD" />
-      </Page>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Folha 3+ — Hora a Hora com Planos (uma caixa por cena/retomada)   */}
-      {/* ---------------------------------------------------------------- */}
-      <Page size="A4" style={kit.pageV2}>
-        <StandardHeader
-          projectTitulo={project.titulo}
-          diretor={project.diretor}
-          producao={project.producao}
-          documentTitle={horaAHoraTitle}
-        />
+        <View minPresenceAhead={100} wrap={false} style={{ marginTop: 12 }}>
+          <StandardHeader
+            projectTitulo={project.titulo}
+            diretor={project.diretor}
+            producao={project.producao}
+            documentTitle={horaAHoraTitle}
+          />
+        </View>
 
         {horaAHoraItens.some((i) => i.kind === "cena") && <PrioridadeLegend />}
         {horaAHoraItens.length === 0 ? (
@@ -851,19 +876,24 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
             const crossSceneReset = firstPlano && firstPlano.tipoReset !== "NENHUM" && firstPlano.tipoReset !== "AJUSTE";
 
             return (
-              <View key={`${block.sceneId}-${blockIndex}`} style={{ width: "100%" }}>
+              <Fragment key={`${block.sceneId}-${blockIndex}`}>
                 {crossSceneReset && (
-                  <Text style={{ ...styles.hhCrossSceneNote, color: resetDividerColor(firstPlano.tipoReset) }}>
+                  <Text minPresenceAhead={70} style={{ ...styles.hhCrossSceneNote, color: resetDividerColor(firstPlano.tipoReset) }}>
                     Troca de cena — +{firstPlano.tempoResetMin ?? 0}min {RESET_LABEL[firstPlano.tipoReset].toLowerCase()}
                   </Text>
                 )}
-                <HoraAHoraBox block={block} project={project} />
-              </View>
+                <HoraAHoraBox
+                  block={block}
+                  project={project}
+                  keepTail={blockIndex >= horaAHoraItens.length - 3}
+                  hasFollowingBlock={blockIndex < horaAHoraItens.length - 1}
+                />
+              </Fragment>
             );
           })
         )}
 
-        <StandardFooter projectTitulo={project.titulo} documentName="Hora a Hora com Planos" />
+        <StandardFooter projectTitulo={project.titulo} documentName="Ordem do Dia" />
       </Page>
     </Document>
   );

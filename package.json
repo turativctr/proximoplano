@@ -24,6 +24,7 @@
     "verify:jornada": "tsx scripts/verify-jornada-diaria.ts",
     "verify:realizado": "tsx scripts/verify-realizado.ts",
     "verify:estimativa": "tsx scripts/verify-estimativa.ts",
+    "verify:od-pagination": "tsx --tsconfig scripts/tsconfig.pdf.json scripts/verify-callsheet-pagination.tsx",
     "verify:pdf": "tsx --tsconfig scripts/tsconfig.pdf.json scripts/verify-pdf-colisoes.tsx",
     "vercel:status": "node scripts/cloud-status.cjs vercel",
     "neon:status": "node scripts/cloud-status.cjs neon",

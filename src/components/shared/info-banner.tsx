@@ -39,14 +39,14 @@ export function InfoBanner({
     <Collapsible
       open={open}
       onOpenChange={handleOpenChange}
-      className="rounded-md border border-blue-200 bg-blue-50"
+      className="rounded-md border border-border bg-muted"
     >
-      <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-blue-900">
+      <CollapsibleTrigger className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-medium text-foreground">
         <Info className="h-4 w-4 shrink-0" />
         <span className="flex-1">{title}</span>
         <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform", open && "rotate-180")} />
       </CollapsibleTrigger>
-      <CollapsibleContent className="px-4 pb-3 pl-10 text-sm text-blue-900/90">
+      <CollapsibleContent className="px-4 pb-3 pl-10 text-sm text-muted-foreground">
         {description}
       </CollapsibleContent>
     </Collapsible>

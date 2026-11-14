@@ -137,6 +137,7 @@ Não há framework de testes unitários: os testes são as suítes `npm run veri
 | origem da estimativa | `verify:estimativa` |
 | tokens de tema | `verify:themes` |
 | qualquer PDF | `verify:pdf` |
+| paginação da Ordem do Dia | `verify:od-pagination` (9 cenários locais; linhas/horários juntos, planos completos, margens e última página) |
 
 Para lógica nova com regra de negócio, crie uma suíte `scripts/verify-<area>.ts` nesse mesmo
 estilo e registre em `package.json`.
@@ -366,3 +367,26 @@ Decididas com o dono, quase todas depois de bugs reais. Não "simplifique" nem p
 - Removidos tipo órfão `src/components/reports/types.ts`, imports não utilizados e dependência direta `date-fns`.
 - Scripts de manutenção/verificação, fixtures, migrations, assets PWA/PDF e configurações dos provedores continuam necessários. Não confundir ausência de import com arquivo descartável.
 - Backup do iniciador anterior arquivado fora do repositório, na pasta `work/arquivo-limpeza` desta avaliação.
+
+### Paginação da Ordem do Dia (14/11/2026)
+- As três seções da OD usam fluxo contínuo; não correspondem mais a folhas fixas.
+- `CallSheetRow` protege linhas da OD sem modificar o kit compartilhado: o motor do react-pdf
+  trata a presença de `fixed` (mesmo indefinido) como exceção à quebra antes de uma linha.
+- Hora a Hora quebra entre planos, mantém cabeçalho com o primeiro plano e identifica a cena
+  nas continuações. `minPresenceAhead` protege o final sem prender uma cena inteira à folha.
+- `verify:od-pagination` gera dados fictícios em memória a partir do demo local, sem gravar.
+
+### Identidade visual dos temas (14/11/2026)
+- Paletas reforçam o gênero na página, superfície e moldura opaca (`theme-chrome`).
+- Miniaturas do seletor usam `data-theme` e os próprios tokens; não duplicar paletas em TS.
+- Famílias funcionais preservadas, inclusive no Histórico (azul-ardósia para planejamento).
+- `verify:themes` verifica 70 tokens por tema, 740 pares de contraste (inclui composição do
+  vidro), famílias funcionais e accents distintos. Não certifica a acessibilidade do app inteiro.
+- Modo Set continua fixado em Documentário, PDFs e cores de revisão/identidade de cena ficam fora.
+
+### Acabamentos dos gêneros (local, 14/11/2026)
+- Texturas estáticas em `theme-chrome`; sombras e raios em `theme-panel` (Card e containers glass).
+- Não aplicar estes acabamentos às tiras, células ou linhas de trabalho. Não há novos filtros,
+  timers ou animações contínuas. `theme-choice` respeita prefers-reduced-motion.
+- `--chrome-light-max` é um limite conservador de luz para verificar o texto sobre a decoração;
+  a faixa do Thriller fica nos 4px superiores, fora do texto.
