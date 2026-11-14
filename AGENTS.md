@@ -87,6 +87,18 @@ npm run dev                      # http://localhost:3000
 - Depois de migration que cria/renomeia model, **reinicie o `next dev`** — ele mantém o Prisma
   Client antigo em memória (o model novo vem `undefined` e parece bug de código).
 
+### Vínculos locais com Vercel e Neon (configurados em 14/11/2026)
+- Pasta de trabalho atual: `~/Documents/Codex/Projetos/proximo-plano`; a pasta antiga foi preservada.
+- `.vercel/project.json`: projeto **filmmanager**, `prj_OAReEYs5U5A6PJVHlAC6zubXZPDM`, equipe `victor-turati`.
+- `.neon`: projeto **Film Manager**, `crimson-wildflower-33344350`, região `aws-sa-east-1`, branch **production**.
+- Esses arquivos são locais e ignorados no Git. Credenciais permanecem nas sessões globais das CLIs; não copie tokens para documentação.
+- `npm run cloud:status` consulta os dois provedores; `vercel:status` e `neon:status` consultam separadamente. São comandos de leitura, sem deploy e sem SQL.
+- `Verificar conexões.command` prepara o PATH e executa essas consultas pela pasta nova.
+- **O contexto Neon aponta para produção; não é o banco de desenvolvimento.** Não execute `neon env pull`, `vercel env pull` ou comandos SQL/migrations contra esse contexto por iniciativa própria. O localhost deve continuar no Postgres local.
+- `npm run local:check` verifica a configuração efetiva do Next, incluindo `.env.local` e sobrescritas. O iniciador recusa URLs de banco remoto.
+- Para reconstruir apenas os vínculos: `npx vercel@65.14.0 link --yes --scope victor-turati --project filmmanager` e `npx neon@9.3.2 link --project-id crimson-wildflower-33344350 --org-id org-solitary-meadow-37945301 --branch production --yes --no-env-pull --no-config --no-analytics`.
+- Vincular não publica. Continuam valendo as restrições de push/deploy e de produção acima.
+
 ### Autenticação
 - **Desenvolvimento:** sem login. `src/middleware.ts` manda quem não tem sessão para
   `/api/auth/auto-login`, que emite um JWT para o e-mail fixo `demo@filmmanager.local`

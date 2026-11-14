@@ -24,7 +24,11 @@
     "verify:jornada": "tsx scripts/verify-jornada-diaria.ts",
     "verify:realizado": "tsx scripts/verify-realizado.ts",
     "verify:estimativa": "tsx scripts/verify-estimativa.ts",
-    "verify:pdf": "tsx --tsconfig scripts/tsconfig.pdf.json scripts/verify-pdf-colisoes.tsx"
+    "verify:pdf": "tsx --tsconfig scripts/tsconfig.pdf.json scripts/verify-pdf-colisoes.tsx",
+    "vercel:status": "node scripts/cloud-status.cjs vercel",
+    "neon:status": "node scripts/cloud-status.cjs neon",
+    "cloud:status": "node scripts/cloud-status.cjs",
+    "local:check": "node scripts/check-local-env.cjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

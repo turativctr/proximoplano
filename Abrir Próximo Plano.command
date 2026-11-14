@@ -3,7 +3,7 @@ set -eu
 export PATH="$HOME/.local/node/bin:$HOME/Applications/Postgres.app/Contents/Versions/latest/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 PROJ="${0:A:h}"
 cd "$PROJ"
-node -e 'const fs=require("fs"); const env=fs.readFileSync(".env","utf8"); const m=env.match(/^DATABASE_URL\s*=\s*["\x27]?([^"\x27\r\n]+)/m); if(!m || !["localhost","127.0.0.1","[::1]"].includes(new URL(m[1]).hostname)) {console.error("O iniciador exige DATABASE_URL local. Nenhuma conexão de produção será aberta."); process.exit(1)}'
+node scripts/check-local-env.cjs
 if ! pg_ctl -D "$HOME/.local/postgres-data" status >/dev/null 2>&1; then
   pg_ctl -D "$HOME/.local/postgres-data" -l "$HOME/Library/Logs/proximo-plano-postgres.log" -o "-p 5432" start
 fi
