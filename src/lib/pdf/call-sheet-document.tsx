@@ -1,4 +1,4 @@
-import { Fragment, type ComponentProps } from "react";
+import { Children, isValidElement, type ReactNode, type ComponentProps } from "react";
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
 import { formatFullDate, weekdayNameFull } from "@/lib/calendar-grid";
@@ -40,6 +40,24 @@ function CallSheetRow(props: ComponentProps<typeof Tr>) {
       <Tr {...props} />
     </View>
   );
+}
+
+/** Título, legenda, cabeçalho e primeira linha formam uma unidade real.
+ * minPresenceAhead no título não enxerga a altura dos filhos da tabela seguinte. */
+function CallSheetSection({ children }: { children: ReactNode }) {
+  const nodes = Children.toArray(children);
+  const tableIndex = nodes.findIndex(node => isValidElement(node) && node.type === Table);
+  const table = nodes[tableIndex];
+  if (!isValidElement<{ children: ReactNode }>(table)) return <View style={styles.section}>{children}</View>;
+  const [header, first, ...rest] = Children.toArray(table.props.children);
+  return <View style={styles.section}>
+    <View wrap={false}>
+      {nodes.slice(0, tableIndex)}
+      <Table>{header}{first}</Table>
+    </View>
+    {rest.length > 0 && <Table>{rest}</Table>}
+    {nodes.slice(tableIndex + 1)}
+  </View>;
 }
 
 // Colunas das tabelas de cena ("Cenas do Dia" e "Escaleta do AD"), em PONTOS.
@@ -285,73 +303,69 @@ function ShotScheduleRows({
 }) {
   let running = startTime ? timeToMinutes(startTime) : null;
 
-  return (
-    <>
-      {schedule.map((entry, i) => {
-        // O reset desta linha é o da PRÓPRIA linha: recalculateDaySchedule grava em cada ShotSchedule
-        // classifyReset(anterior, este), o custo de chegar nele. Antes o documento lia o de
-        // schedule[i-1] e somava o reset depois do plano — a divisória e o HH saíam uma linha
-        // deslocados em relação à tela da ordem do dia e ao Hora a Hora.
-        const chegada = i > 0 ? entry : null;
-        const isHeavyReset = chegada ? HEAVY_RESETS.includes(chegada.tipoReset) : false;
-        if (running !== null) running += entry.tempoResetMin ?? 0;
-        const hh = running !== null ? formatHHh(minutesToTime(running)) : "—";
-        if (running !== null) running += entry.tempoTotalMin;
-        const filmado = entry.status === "FILMADO";
-        const descartado = entry.status === "DESCARTADO";
+  return schedule.map((entry, i) => {
+    // O reset desta linha é o da PRÓPRIA linha: recalculateDaySchedule grava em cada ShotSchedule
+    // classifyReset(anterior, este), o custo de chegar nele. Antes o documento lia o de
+    // schedule[i-1] e somava o reset depois do plano — a divisória e o HH saíam uma linha
+    // deslocados em relação à tela da ordem do dia e ao Hora a Hora.
+    const chegada = i > 0 ? entry : null;
+    const isHeavyReset = chegada ? HEAVY_RESETS.includes(chegada.tipoReset) : false;
+    if (running !== null) running += entry.tempoResetMin ?? 0;
+    const hh = running !== null ? formatHHh(minutesToTime(running)) : "—";
+    if (running !== null) running += entry.tempoTotalMin;
+    const filmado = entry.status === "FILMADO";
+    const descartado = entry.status === "DESCARTADO";
 
-        return (
-          <View key={entry.id} style={{ width: "100%" }} wrap={false}>
-            {chegada && chegada.tipoReset !== "NENHUM" && chegada.tipoReset !== "AJUSTE" && (
-              <CallSheetRow bg={colors.rowAlt} wrap={false}>
-                <Td width="10%" />
-                <Td width="90%">
-                  <Text style={{ fontSize: 7, color: resetDividerColor(chegada.tipoReset) }}>
-                    +{chegada.tempoResetMin ?? 0}min {RESET_LABEL[chegada.tipoReset].toLowerCase()}
-                  </Text>
-                </Td>
-              </CallSheetRow>
-            )}
-            <CallSheetRow
-              alt={i % 2 === 1}
-              bg={
-                chegada?.tipoReset === "RESET_COMPLETO"
-                  ? colors.dangerBg
-                  : isHeavyReset
-                    ? colors.amberBg
-                    : undefined
-              }
-              wrap={false}
+    return (
+      <View key={entry.id} style={{ width: "100%" }} wrap={false}>
+        {chegada && chegada.tipoReset !== "NENHUM" && chegada.tipoReset !== "AJUSTE" && (
+          <CallSheetRow bg={colors.rowAlt} wrap={false}>
+            <Td width="10%" />
+            <Td width="90%">
+              <Text style={{ fontSize: 7, color: resetDividerColor(chegada.tipoReset) }}>
+                +{chegada.tempoResetMin ?? 0}min {RESET_LABEL[chegada.tipoReset].toLowerCase()}
+              </Text>
+            </Td>
+          </CallSheetRow>
+        )}
+        <CallSheetRow
+          alt={i % 2 === 1}
+          bg={
+            chegada?.tipoReset === "RESET_COMPLETO"
+              ? colors.dangerBg
+              : isHeavyReset
+                ? colors.amberBg
+                : undefined
+          }
+          wrap={false}
+        >
+          <Td width="10%" align="center">
+            {hh}
+          </Td>
+          <Td width="15%">
+            C{entry.sceneNumero} · P{entry.numero}
+          </Td>
+          <Td width={PRIORIDADE_COL_PT} align="center">
+            {PRIORIDADE_INICIAL[entry.prioridade]}
+          </Td>
+          <Td flex={1}>
+            <Text
+              style={{
+                color: descartado ? colors.medGray : filmado ? colors.success : colors.darkGray,
+                textDecoration: descartado ? "line-through" : undefined,
+              }}
             >
-              <Td width="10%" align="center">
-                {hh}
-              </Td>
-              <Td width="15%">
-                C{entry.sceneNumero} · P{entry.numero}
-              </Td>
-              <Td width={PRIORIDADE_COL_PT} align="center">
-                {PRIORIDADE_INICIAL[entry.prioridade]}
-              </Td>
-              <Td flex={1}>
-                <Text
-                  style={{
-                    color: descartado ? colors.medGray : filmado ? colors.success : colors.darkGray,
-                    textDecoration: descartado ? "line-through" : undefined,
-                  }}
-                >
-                  {entry.descricao}
-                </Text>
-              </Td>
-              <Td width="15%">{entry.lente || "—"}</Td>
-              <Td width="15%" align="center">
-                {entry.tempoTotalMin}min ({entry.takesPrevistos}T)
-              </Td>
-            </CallSheetRow>
-          </View>
-        );
-      })}
-    </>
-  );
+              {entry.descricao}
+            </Text>
+          </Td>
+          <Td width="15%">{entry.lente || "—"}</Td>
+          <Td width="15%" align="center">
+            {entry.tempoTotalMin}min ({entry.takesPrevistos}T)
+          </Td>
+        </CallSheetRow>
+      </View>
+    );
+  });
 }
 
 /** Sub-linha de plano dentro de uma caixa de Hora a Hora (Hora a Hora com Planos). Convenção de reset:
@@ -408,16 +422,18 @@ function PlanoRowAD({
 
 /** O cabeçalho acompanha o primeiro plano. Cenas extensas podem continuar na página seguinte,
  *  sempre entre planos completos; prender a cena inteira causava páginas vazias e cortes.
- *  Na cauda do documento, reserva espaço para as próximas linhas, evitando uma última folha
- *  com um único plano. É uma indicação de presença, não um bloco indivisível de altura ilimitada. */
+ *  A renderização mede as caixas e pode antecipar a quebra entre planos para equilibrar
+ *  as duas últimas páginas, sem adivinhar a altura pela quantidade de cenas. */
 function HoraAHoraBox({
   block,
   project,
-  keepTail,
-  hasFollowingBlock,
+  blockIndex,
+  breakBefore,
+  leadingNote,
 }: {
-  keepTail: boolean;
-  hasFollowingBlock: boolean;
+  blockIndex: number;
+  breakBefore?: string;
+  leadingNote?: ReactNode;
   block: ShootDayReportData["horaAHoraPlanos"][number];
   project: ShootDayReportData["project"];
 }) {
@@ -427,24 +443,27 @@ function HoraAHoraBox({
     <>
       <View
         wrap={false}
-        minPresenceAhead={keepTail && (block.planos.length > 1 || hasFollowingBlock) ? 200 : 0}
-        style={{ borderWidth: 0.75, borderColor: colors.borderV2, marginTop: 6 }}
+        id={`od-hh-${blockIndex}-0`}
+        break={breakBefore === `od-hh-${blockIndex}-0`}
       >
-        <View style={styles.hhBoxHeader}>
-          <Text style={styles.hhBoxHeaderText}>
-            Cena {block.numero} · {block.tipo ?? "—"} · {periodoAbrev(block.classeLuz)} · {block.setLocacaoDisplay} —{" "}
-            {block.sinopseAD || "—"} · {castLabel}
-          </Text>
+        {leadingNote}
+        <View style={{ borderWidth: 0.75, borderColor: colors.borderV2, marginTop: 6 }}>
+          <View style={styles.hhBoxHeader}>
+            <Text style={styles.hhBoxHeaderText}>
+              Cena {block.numero} · {block.tipo ?? "—"} · {periodoAbrev(block.classeLuz)} · {block.setLocacaoDisplay} —{" "}
+              {block.sinopseAD || "—"} · {castLabel}
+            </Text>
+          </View>
+          {block.planos[0] && <PlanoRowAD plano={block.planos[0]} index={0} sceneNumero={block.numero} />}
         </View>
-        {block.planos[0] && <PlanoRowAD plano={block.planos[0]} index={0} sceneNumero={block.numero} />}
       </View>
-      {/* Protege os doze planos finais. Nunca exige espaço depois do último nó: o motor
-          reservaria uma área em branco em vez de apenas manter as próximas linhas juntas. */}
+      {/* Cada plano preserva seu reset; a quebra nunca atravessa uma linha. */}
       {block.planos.slice(1).map((plano, i) => (
         <View
           key={plano.id}
           wrap={false}
-          minPresenceAhead={keepTail && block.planos.length > 3 && i === Math.max(0, block.planos.length - 13) ? 260 : 0}
+          id={`od-hh-${blockIndex}-${i + 1}`}
+          break={breakBefore === `od-hh-${blockIndex}-${i + 1}`}
           style={{ borderWidth: 0.75, borderTopWidth: 0, borderColor: colors.borderV2 }}
         >
           <PlanoRowAD plano={plano} index={i + 1} sceneNumero={block.numero} />
@@ -454,7 +473,11 @@ function HoraAHoraBox({
   );
 }
 
-export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
+export function CallSheetDocument({ data, breakBefore, onRender }: {
+  data: ShootDayReportData;
+  breakBefore?: string;
+  onRender?: ComponentProps<typeof Document>["onRender"];
+}) {
   const {
     project,
     shootDay,
@@ -507,7 +530,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
   const horaAHoraTitle = `Hora a Hora com Planos — Diária ${shootDay.numeroDia} — ${weekdayNameFull(shootDay.data)}, ${formatFullDate(shootDay.data)}`;
 
   return (
-    <Document>
+    <Document onRender={onRender}>
       {/* ---------------------------------------------------------------- */}
       {/* Ordem do Dia (logística, segurança, chamadas, cenas)   */}
       {/* ---------------------------------------------------------------- */}
@@ -611,7 +634,7 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
           </View>
         )}
 
-        <View style={styles.section}>
+        <CallSheetSection>
           <SectionTitle>ELENCO</SectionTitle>
           <Table>
             <CallSheetRow header dark>
@@ -660,10 +683,10 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
           {castPresente.some((c) => c.estimado) && (
             <Text style={styles.estimadoFootnote}>* horário estimado — sem apontamento manual cadastrado</Text>
           )}
-        </View>
+        </CallSheetSection>
 
         {extrasPresente.length > 0 && (
-          <View style={styles.section}>
+          <CallSheetSection>
             <SectionTitle>FIGURAÇÃO</SectionTitle>
             <Table>
               <CallSheetRow header dark>
@@ -696,10 +719,10 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
               ))}
             </Table>
             <MealsFooterRow total={extrasMeals.total} cafe={extrasMeals.cafe} almoco={extrasMeals.almoco} />
-          </View>
+          </CallSheetSection>
         )}
 
-        <View style={styles.section}>
+        <CallSheetSection>
           <SectionTitle>CENAS DO DIA</SectionTitle>
           {castLegend && <CastLegend entries={castLegend} />}
           <Table>
@@ -751,10 +774,10 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
               <SeparatorRow bg={colors.separatorBg} label={`DESPRODUÇÃO — ${formatHHh(shootDay.desprodInicio)}`} />
             )}
           </Table>
-        </View>
+        </CallSheetSection>
 
         {shotSchedule.length > 0 && (
-          <View style={styles.section}>
+          <CallSheetSection>
             <SectionTitle>ORDEM DE FILMAGEM</SectionTitle>
             <PrioridadeLegend />
             <Table>
@@ -772,9 +795,9 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
                   TEMPO
                 </Td>
               </CallSheetRow>
-              <ShotScheduleRows schedule={shotSchedule} startTime={shootDay.blocoManhaInicio ?? shootDay.chamadaGeral} />
+              {ShotScheduleRows({ schedule: shotSchedule, startTime: shootDay.blocoManhaInicio ?? shootDay.chamadaGeral })}
             </Table>
-          </View>
+          </CallSheetSection>
         )}
 
         <View style={styles.section} wrap={false}>
@@ -792,59 +815,61 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
         </View>
 
         {/* As seções compartilham o fluxo para aproveitar o espaço restante da página. */}
-        <View minPresenceAhead={90} wrap={false} style={{ marginTop: 12 }}>
-          <StandardHeader
-            projectTitulo={project.titulo}
-            diretor={project.diretor}
-            producao={project.producao}
-            documentTitle={escaletaTitle}
-          />
-        </View>
-
-        <Table>
-          <CallSheetRow header dark>
-            <Td width={COL.cena}>CENA</Td>
-            <Td width={COL.tipo}>INT/EXT</Td>
-            <Td width={COL.periodo}>D/N</Td>
-            <Td flex={2}>SET / LOCAÇÃO</Td>
-            <Td flex={3}>SINOPSE CURTA</Td>
-            <Td width={COL.elenco}>ELENCO</Td>
-            <Td width={COL.paginas} align="right">
-              PÁGS
-            </Td>
-            <Td width={COL.horario} align="center">
-              PREP
-            </Td>
-            <Td width={COL.horario} align="center">
-              ROD
-            </Td>
-          </CallSheetRow>
-          {intercalar(manhaScenes, blocosManha).map((item, i) =>
-            item.tipo === "bloco" ? (
-              <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
-            ) : (
-              <SceneRowAD key={item.cena.sceneId} scene={item.cena} alt={i % 2 === 1} project={project} />
-            )
-          )}
-          {(shootDay.almocoInicio || tardeScenes.length > 0) && (
-            <SeparatorRow
-              bg={colors.separatorBg}
-              label={`ALMOÇO${shootDay.almocoInicio ? ` — ${formatHHh(shootDay.almocoInicio)}` : ""}${
-                shootDay.almocoFim ? ` às ${formatHHh(shootDay.almocoFim)}` : ""
-              }`}
+        <CallSheetSection>
+          <View minPresenceAhead={90} wrap={false} style={{ marginTop: 12 }}>
+            <StandardHeader
+              projectTitulo={project.titulo}
+              diretor={project.diretor}
+              producao={project.producao}
+              documentTitle={escaletaTitle}
             />
-          )}
-          {intercalar(tardeScenes, blocosTarde).map((item, i) =>
-            item.tipo === "bloco" ? (
-              <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
-            ) : (
-              <SceneRowAD key={item.cena.sceneId} scene={item.cena} alt={i % 2 === 1} project={project} />
-            )
-          )}
-          {shootDay.desprodInicio && (
-            <SeparatorRow bg={colors.separatorBg} label={`DESPRODUÇÃO — ${formatHHh(shootDay.desprodInicio)}`} />
-          )}
-        </Table>
+          </View>
+
+          <Table>
+            <CallSheetRow header dark>
+              <Td width={COL.cena}>CENA</Td>
+              <Td width={COL.tipo}>INT/EXT</Td>
+              <Td width={COL.periodo}>D/N</Td>
+              <Td flex={2}>SET / LOCAÇÃO</Td>
+              <Td flex={3}>SINOPSE CURTA</Td>
+              <Td width={COL.elenco}>ELENCO</Td>
+              <Td width={COL.paginas} align="right">
+                PÁGS
+              </Td>
+              <Td width={COL.horario} align="center">
+                PREP
+              </Td>
+              <Td width={COL.horario} align="center">
+                ROD
+              </Td>
+            </CallSheetRow>
+            {intercalar(manhaScenes, blocosManha).map((item, i) =>
+              item.tipo === "bloco" ? (
+                <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
+              ) : (
+                <SceneRowAD key={item.cena.sceneId} scene={item.cena} alt={i % 2 === 1} project={project} />
+              )
+            )}
+            {(shootDay.almocoInicio || tardeScenes.length > 0) && (
+              <SeparatorRow
+                bg={colors.separatorBg}
+                label={`ALMOÇO${shootDay.almocoInicio ? ` — ${formatHHh(shootDay.almocoInicio)}` : ""}${
+                  shootDay.almocoFim ? ` às ${formatHHh(shootDay.almocoFim)}` : ""
+                }`}
+              />
+            )}
+            {intercalar(tardeScenes, blocosTarde).map((item, i) =>
+              item.tipo === "bloco" ? (
+                <BlocoDeTempoRow key={item.bloco.id} bloco={blocoComHorario(item.bloco.id)} />
+              ) : (
+                <SceneRowAD key={item.cena.sceneId} scene={item.cena} alt={i % 2 === 1} project={project} />
+              )
+            )}
+            {shootDay.desprodInicio && (
+              <SeparatorRow bg={colors.separatorBg} label={`DESPRODUÇÃO — ${formatHHh(shootDay.desprodInicio)}`} />
+            )}
+          </Table>
+        </CallSheetSection>
 
         <View minPresenceAhead={100} wrap={false} style={{ marginTop: 12 }}>
           <StandardHeader
@@ -876,19 +901,18 @@ export function CallSheetDocument({ data }: { data: ShootDayReportData }) {
             const crossSceneReset = firstPlano && firstPlano.tipoReset !== "NENHUM" && firstPlano.tipoReset !== "AJUSTE";
 
             return (
-              <Fragment key={`${block.sceneId}-${blockIndex}`}>
-                {crossSceneReset && (
-                  <Text minPresenceAhead={70} style={{ ...styles.hhCrossSceneNote, color: resetDividerColor(firstPlano.tipoReset) }}>
+              <HoraAHoraBox
+                key={`${block.sceneId}-${blockIndex}`}
+                block={block}
+                project={project}
+                blockIndex={blockIndex}
+                breakBefore={breakBefore}
+                leadingNote={crossSceneReset ? (
+                  <Text style={{ ...styles.hhCrossSceneNote, color: resetDividerColor(firstPlano.tipoReset) }}>
                     Troca de cena — +{firstPlano.tempoResetMin ?? 0}min {RESET_LABEL[firstPlano.tipoReset].toLowerCase()}
                   </Text>
-                )}
-                <HoraAHoraBox
-                  block={block}
-                  project={project}
-                  keepTail={blockIndex >= horaAHoraItens.length - 3}
-                  hasFollowingBlock={blockIndex < horaAHoraItens.length - 1}
-                />
-              </Fragment>
+                ) : undefined}
+              />
             );
           })
         )}

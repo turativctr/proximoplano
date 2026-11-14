@@ -1,10 +1,9 @@
-import { renderToBuffer } from "@react-pdf/renderer";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth";
 import { gerarNomeArquivo } from "@/lib/filename";
-import { CallSheetDocument } from "@/lib/pdf/call-sheet-document";
+import { renderCallSheet } from "@/lib/pdf/render-call-sheet";
 import { findOwnedProject } from "@/lib/project-access";
 import { getShootDayReportData } from "@/lib/report-data";
 
@@ -21,7 +20,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   const data = await getShootDayReportData(params.id, shootDayId);
   if (!data) return NextResponse.json({ error: "Diária não encontrada." }, { status: 404 });
 
-  const buffer = await renderToBuffer(<CallSheetDocument data={data} />);
+  const buffer = await renderCallSheet(data);
 
   return new NextResponse(new Uint8Array(buffer), {
     status: 200,

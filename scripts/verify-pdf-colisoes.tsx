@@ -40,6 +40,7 @@ import { BreakdownDocument } from "../src/lib/pdf/breakdown-document";
 import { BudgetComparisonDocument } from "../src/lib/pdf/budget-comparison-document";
 import { BudgetDetailedDocument } from "../src/lib/pdf/budget-detailed-document";
 import { CallSheetDocument } from "../src/lib/pdf/call-sheet-document";
+import { renderCallSheet } from "../src/lib/pdf/render-call-sheet";
 import { CastAccountingDocument } from "../src/lib/pdf/cast-accounting-document";
 import { CastScheduleDocument } from "../src/lib/pdf/cast-schedule-document";
 import { ChangedPagesDocument } from "../src/lib/pdf/changed-pages-document";
@@ -680,7 +681,10 @@ async function rodar(
   let total = 0;
   console.log(`\n=== Colisão de texto nos PDFs (pior caso, ${documentos.length} documentos) ===`);
   for (const doc of documentos) {
-    const buffer = await renderToBuffer(await doc.gerar());
+    const element = await doc.gerar();
+    const buffer = element.type === CallSheetDocument
+      ? await renderCallSheet(element.props.data)
+      : await renderToBuffer(element);
     if (saida) writeFileSync(`${saida}/${doc.nome.replace(/[^\p{L}\p{N}]+/gu, "_")}.pdf`, buffer);
     const { colisoes, paginas } = await encontrarColisoes(buffer);
     total += colisoes.length;

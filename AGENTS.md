@@ -137,7 +137,7 @@ Não há framework de testes unitários: os testes são as suítes `npm run veri
 | origem da estimativa | `verify:estimativa` |
 | tokens de tema | `verify:themes` |
 | qualquer PDF | `verify:pdf` |
-| paginação da Ordem do Dia | `verify:od-pagination` (9 cenários locais; linhas/horários juntos, planos completos, margens e última página) |
+| paginação da Ordem do Dia | `verify:od-pagination` (11 cenários locais; linhas/horários juntos, planos completos, margens e última página) |
 
 Para lógica nova com regra de negócio, crie uma suíte `scripts/verify-<area>.ts` nesse mesmo
 estilo e registre em `package.json`.
@@ -373,8 +373,13 @@ Decididas com o dono, quase todas depois de bugs reais. Não "simplifique" nem p
 - `CallSheetRow` protege linhas da OD sem modificar o kit compartilhado: o motor do react-pdf
   trata a presença de `fixed` (mesmo indefinido) como exceção à quebra antes de uma linha.
 - Hora a Hora quebra entre planos, mantém cabeçalho com o primeiro plano e identifica a cena
-  nas continuações. `minPresenceAhead` protege o final sem prender uma cena inteira à folha.
+  nas continuações. `renderCallSheet` mede o layout e equilibra as duas últimas folhas quando
+  a última ocupa menos de 30%, sem reduzir fonte, acrescentar páginas ou dividir linhas.
+- Títulos de tabela ficam no mesmo bloco que cabeçalho e primeira linha (`CallSheetSection`).
 - `verify:od-pagination` gera dados fictícios em memória a partir do demo local, sem gravar.
+- `verify-callsheet-fixtures.tsx entrada.json saida.pdf [original.pdf]` valida reproduções locais:
+  compara conteúdo, títulos, colisões e última folha. Não commitar dados reais dessas fixtures.
+- O adaptador de medição usa o layout do react-pdf 4; rodar as suítes de PDF ao atualizar a dependência.
 
 ### Identidade visual dos temas (14/11/2026)
 - Paletas reforçam o gênero na página, superfície e moldura opaca (`theme-chrome`).

@@ -1,9 +1,8 @@
 /** Regressão da paginação da OD: dados sintéticos em memória, sem gravar no banco. */
-import { renderToBuffer } from "@react-pdf/renderer";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { CallSheetDocument } from "../src/lib/pdf/call-sheet-document";
+import { renderCallSheet } from "../src/lib/pdf/render-call-sheet";
 import { prisma } from "../src/lib/prisma";
 import { getShootDayReportData, type ShootDayReportData } from "../src/lib/report-data";
 import { formatHHh } from "../src/lib/schedule";
@@ -50,9 +49,10 @@ async function main() {
   const output = process.env.VERIFY_PDF_OUT;
   if (output) mkdirSync(output, { recursive: true });
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  for (const [name, count, shots] of [["curta", 1, 2], ["longa", 14, 2], ["muitas-cenas", 40, 2], ["cena-com-muitos-planos", 1, 60], ["limite-7", 7, 2], ["limite-9", 9, 2], ["limite-12", 12, 2], ["limite-16", 16, 2], ["limite-18", 18, 2]] as const) {
+  for (const [name, count, shots] of [["curta", 1, 2], ["longa", 14, 2], ["muitas-cenas", 40, 2], ["cena-com-muitos-planos", 1, 60], ["limite-7", 7, 2], ["limite-9", 9, 2], ["limite-12", 12, 2], ["limite-16", 16, 2], ["limite-18", 18, 2], ["cauda-curta", 13, 1], ["meteo-extensa", 12, 1]] as const) {
     const data = fixture(base, count, shots);
-    const buffer = await renderToBuffer(<CallSheetDocument data={data} />);
+    if (name === "meteo-extensa") data.shootDay.meteoDescricao = "Alerta de chuva e vento. Conferir equipamentos e transporte. ".repeat(14);
+    const buffer = await renderCallSheet(data);
     if (output) writeFileSync(join(output, `${name}.pdf`), buffer);
     const doc = await pdfjs.getDocument({ data: new Uint8Array(buffer), verbosity: 0 }).promise;
     const pages: string[] = [];
@@ -89,6 +89,12 @@ async function main() {
       for (const scene of data.scenes) if (rowCounts.get(scene.sceneId) !== 2) {
         throw new Error(`${name}: cena ${scene.numero} ausente ou duplicada nas tabelas`);
       }
+      for (const heading of ["CENAS DO DIA", "Escaleta do AD"]) {
+        const page = pages.findIndex(text => text.includes(heading));
+        if (page < 0 || !pages[page].includes(data.scenes[0].numero + " ")) throw new Error(`${name}: título ${heading} separado da primeira cena`);
+      }
+      const hhPage = pages.findIndex(text => text.includes("Hora a Hora com Planos"));
+      if (hhPage < 0 || !pages[hhPage].includes("INI0X0 ")) throw new Error(`${name}: título Hora a Hora separado do primeiro plano`);
       if (doc.numPages > 1 && depths.at(-1)! < 220) throw new Error(`${name}: ultima pagina quase vazia`);
       if (colisoes.length) console.log(colisoes.slice(0, 12));
       if (colisoes.length) throw new Error(`${name}: colisao de texto`);
