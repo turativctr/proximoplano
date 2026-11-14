@@ -20,7 +20,7 @@ import { scriptDraftConfirmSchema } from "@/lib/validation/script-draft";
 // (aqui, aplicar o diff entre a versão salva e a recém-importada).
 const PRISMA_TX_TIMEOUT_MS = 30_000;
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 

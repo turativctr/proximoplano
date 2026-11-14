@@ -26,7 +26,6 @@ import { temExecucao } from "@/lib/scene-shoot-day-fields";
 import { STATUS_LABEL } from "@/lib/scene-progress";
 import {
   computeAutoFillPrepMin,
-  computeAutoFillRodMin,
   DEFAULT_PREP_MIN,
   validateAlmocoTiming,
 } from "@/lib/schedule";

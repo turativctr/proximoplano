@@ -6,7 +6,7 @@ import { getCharacterId } from "@/lib/character-id";
 import { detectSceneConflicts } from "@/lib/conflicts";
 import { rotuloOrigem } from "@/lib/estimativa";
 import { formatPaginas, formatTempoEstimado } from "@/lib/paginas";
-import { colors, DocHeader, kit, KeyValue } from "@/lib/pdf/kit";
+import { colors, DocHeader, kit } from "@/lib/pdf/kit";
 import type { ShootDayReportData } from "@/lib/report-data";
 import { timeToMinutes } from "@/lib/schedule";
 

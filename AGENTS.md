@@ -360,3 +360,9 @@ Decididas com o dono, quase todas depois de bugs reais. Não "simplifique" nem p
 - Banco local renomeado para `proximoplano`; usuário demo atualizado sem mudar seu ID ou projetos.
 - Prefixos antigos de localStorage são lidos somente para preservar preferências existentes.
 - Aliases antigos da Vercel foram preservados para não quebrar links; não houve publicação.
+
+### Limpeza de código (14/11/2026)
+- TypeScript verifica `noUnusedLocals` e `noUnusedParameters`; parâmetros exigidos pela assinatura mas não lidos usam prefixo `_`.
+- Removidos tipo órfão `src/components/reports/types.ts`, imports não utilizados e dependência direta `date-fns`.
+- Scripts de manutenção/verificação, fixtures, migrations, assets PWA/PDF e configurações dos provedores continuam necessários. Não confundir ausência de import com arquivo descartável.
+- Backup do iniciador anterior arquivado fora do repositório, na pasta `work/arquivo-limpeza` desta avaliação.

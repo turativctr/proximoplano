@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { getScriptDraftDetail } from "@/lib/draft-report-data";
 import { findOwnedProject } from "@/lib/project-access";
 
-export async function GET(request: Request, { params }: { params: { id: string; draftId: string } }) {
+export async function GET(_request: Request, { params }: { params: { id: string; draftId: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 

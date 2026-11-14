@@ -8,7 +8,7 @@ import { gerarNomeArquivo } from "@/lib/filename";
 import { CrewContactListDocument } from "@/lib/pdf/crew-contact-list-document";
 import { findOwnedProject } from "@/lib/project-access";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 

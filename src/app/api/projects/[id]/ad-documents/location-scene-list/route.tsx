@@ -8,7 +8,7 @@ import { getLocationSceneListData } from "@/lib/ad-documents-data";
 import { LocationSceneListDocument } from "@/lib/pdf/location-scene-list-document";
 import { findOwnedProject } from "@/lib/project-access";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(_request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
 

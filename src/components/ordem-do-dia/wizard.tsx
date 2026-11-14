@@ -9,7 +9,7 @@ import { ResetFatorControl } from "@/components/shared/reset-fator-control";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { gerarNomeArquivo } from "@/lib/filename";
-import { computeAutoFillPrepMin, computeAutoFillRodMin, minutesToTime, timeToMinutes } from "@/lib/schedule";
+import { computeAutoFillPrepMin, minutesToTime, timeToMinutes } from "@/lib/schedule";
 import { planosDaParte } from "@/lib/scene-parts-shared";
 import { computeSceneShotTotals } from "@/lib/shots-shared";
 import { cn } from "@/lib/utils";
