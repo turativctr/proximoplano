@@ -240,7 +240,7 @@ export function BreakdownForm({
           )}
           <div className="flex gap-2">
             <Input
-              placeholder="Nova figuração (ex.: Garçom)"
+              aria-label="Nome da nova figuração" placeholder="Nova figuração (ex.: Garçom)"
               value={newExtraName}
               onChange={(e) => setNewExtraName(e.target.value)}
             />
@@ -248,10 +248,10 @@ export function BreakdownForm({
               type="number"
               min={1}
               className="w-20"
-              value={newExtraQty}
+              aria-label="Quantidade da nova figuração" value={newExtraQty}
               onChange={(e) => setNewExtraQty(e.target.value)}
             />
-            <Button type="button" variant="outline" size="icon" onClick={addExtra}>
+            <Button type="button" variant="outline" size="icon" aria-label="Adicionar figuração" onClick={addExtra}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>

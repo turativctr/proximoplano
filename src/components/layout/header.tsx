@@ -9,7 +9,9 @@ import { GLASS_CHROME_BG, GLASS_CHROME_BORDER_COLOR, GLASS_CHROME_BORDER_WIDTH_B
 import { getActiveModule, MODULE_BADGE_CLASS, MODULE_LABEL } from "@/lib/module-theme";
 import { cn } from "@/lib/utils";
 
-export function Header() {
+import { MobileNavigation } from "./sidebar";
+
+export function Header({ isAdmin }: { isAdmin?: boolean }) {
   const params = useParams<{ id?: string }>();
   const pathname = usePathname();
   const activeModule = getActiveModule(pathname);
@@ -39,20 +41,21 @@ export function Header() {
   return (
     <header
       className={cn(
-        "flex h-14 items-center justify-between rounded-b-2xl px-4",
+        "flex min-h-14 shrink-0 items-center gap-3 rounded-b-2xl px-4 py-3",
         GLASS_CHROME_BORDER_WIDTH_B,
         GLASS_CHROME_BG,
         GLASS_CHROME_BORDER_COLOR
       )}
     >
-      <div className="flex items-center gap-2">
+      <MobileNavigation isAdmin={isAdmin} />
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground">
           Projetos
         </Link>
         {activeProjectTitle && (
           <>
-            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-base font-semibold text-foreground">{activeProjectTitle}</span>
+            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span className="min-w-0 break-words text-base font-semibold text-foreground [overflow-wrap:anywhere]">{activeProjectTitle}</span>
           </>
         )}
         {activeModule && (

@@ -14,6 +14,7 @@ import { compareLocacaoNome } from "@/lib/locacao";
 import { naturalCompare } from "@/lib/natural-sort";
 import { prisma } from "@/lib/prisma";
 import { tempoDeReferenciaMin } from "@/lib/estimativa";
+import { estimativaAgendada } from "@/lib/estimativa-agendada";
 import { getMediaDoProjeto, getPartidaDoProjeto, origemDoTempoDaLinha } from "@/lib/estimativa-server";
 import { resolveEffectivePrepMin, resolveEffectiveRodMin, suggestAlmocoIndex } from "@/lib/schedule";
 import {
@@ -256,29 +257,8 @@ export default async function StripboardPage({ params }: { params: { id: string 
               rodDigitado: t.cena.rodDigitado,
               // Origem do número que ESTA diária usa: o Rod gravado na linha manda sobre a estimativa
               // da cena, porque é ele que vira horário.
-              origemTempo: (() => {
-                const parteDaLinha = t.cena.scene.parts.find((p) => p.id === t.cena.scenePartId) ?? null;
-                const planosDaLinha = parteDaLinha
-                  ? t.cena.scene.shots.filter((sh) => sh.scenePartId === parteDaLinha.id)
-                  : t.cena.scene.shots;
-                return origemDoTempoDaLinha({
-                  rodMin: t.cena.rodMin,
-                  rodDigitado: t.cena.rodDigitado,
-                  duracaoAlvoMin: parteDaLinha ? null : t.cena.scene.duracaoAlvoMin,
-                  planosMin: planosDaLinha.length > 0 ? computeSceneShotTotals(planosDaLinha).totalMin : null,
-                  planos: planosDaLinha.length,
-                  oitavos: parteDaLinha
-                    ? parteDaLinha.oitavos
-                    : paginasParaOitavos(t.cena.scene.paginas),
-                  ambiente: t.cena.scene.tipo,
-                  partida,
-                  media,
-                  // Esta linha vira horário na diária: um número precisa existir.
-                  permitirPartida: true,
-                  resetsMin: planosDaLinha.length > 0 ? computeSceneShotTotals(planosDaLinha).resetsMin : 0,
-                  fatorResetPercent: day.fatorResetPercent,
-                });
-              })(),
+              origemTempo: estimativaAgendada(t.cena.scene, t.cena.scene.parts.find((p) => p.id === t.cena.scenePartId), t.cena, { partida, media, fatorResetPercent: day.fatorResetPercent, permitirPartida: true }),
+              origemTempoAutomatica: estimativaAgendada(t.cena.scene, t.cena.scene.parts.find((p) => p.id === t.cena.scenePartId), { rodMin: t.cena.rodDigitado ? null : t.cena.rodMin, rodDigitado: false }, { partida, media, fatorResetPercent: day.fatorResetPercent, permitirPartida: true }),
               observacoes: t.cena.observacoes,
               observacoesAutoGeradas: t.cena.observacoesAutoGeradas,
               execucao: {
@@ -306,19 +286,7 @@ export default async function StripboardPage({ params }: { params: { id: string 
               ? scheduleDoBloco(t.bloco)
               : {
                   prepMin: resolveEffectivePrepMin(t.cena.prepMin),
-                  rodMin: resolveEffectiveRodMin(
-                    t.cena.rodMin,
-                    tempoEstimadoDaEntrada(
-                      tempoDeReferenciaMin(
-                        t.cena.scene.tempoEstimadoMin,
-                        paginasParaOitavos(t.cena.scene.paginas),
-                        partida,
-                        t.cena.scene.tipo
-                      ),
-                      paginasParaOitavos(t.cena.scene.paginas),
-                      t.cena.scene.parts.find((p) => p.id === t.cena.scenePartId)
-                    )
-                  ),
+                  rodMin: resolveEffectiveRodMin(null, estimativaAgendada(t.cena.scene, t.cena.scene.parts.find((p) => p.id === t.cena.scenePartId), t.cena, { partida, media, fatorResetPercent: day.fatorResetPercent, permitirPartida: true }).min),
                 }
           ),
           project.limiteAlmocoMin

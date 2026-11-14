@@ -134,7 +134,7 @@ export function Step1Locacao({
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        Não há API gratuita confiável para sugerir hospital mais próximo — preencha manualmente.
+        Informe o hospital de referência e confirme o endereço e o telefone com a produção.
       </p>
 
       {pontosPorTipo.length > 0 && (

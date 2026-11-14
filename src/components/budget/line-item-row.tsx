@@ -46,7 +46,7 @@ export function LineItemRow({
     <TableRow className={saving ? "opacity-60" : undefined}>
       <TableCell>
         <Input
-          defaultValue={item.descricao}
+          aria-label={`Descrição: ${item.descricao}`} defaultValue={item.descricao}
           className="h-7 min-w-[10rem] text-xs"
           onBlur={(e) => e.target.value !== item.descricao && patch({ descricao: e.target.value })}
         />
@@ -55,14 +55,14 @@ export function LineItemRow({
         <Input
           type="number"
           step="any"
-          defaultValue={item.quantidade}
+          aria-label={`Quantidade: ${item.descricao}`} defaultValue={item.quantidade}
           className="h-7 w-16 text-xs"
           onBlur={(e) => patch({ quantidade: Number(e.target.value) || 0 })}
         />
       </TableCell>
       <TableCell>
         <Input
-          defaultValue={item.unidade}
+          aria-label={`Unidade: ${item.descricao}`} defaultValue={item.unidade}
           className="h-7 w-20 text-xs"
           onBlur={(e) => e.target.value !== item.unidade && patch({ unidade: e.target.value })}
         />
@@ -80,7 +80,7 @@ export function LineItemRow({
         <Input
           type="number"
           step="any"
-          defaultValue={item.taxa}
+          aria-label={`Valor unitário: ${item.descricao}`} defaultValue={item.taxa}
           className="h-7 w-20 text-xs"
           onBlur={(e) => patch({ taxa: Number(e.target.value) || 0 })}
         />
@@ -89,7 +89,7 @@ export function LineItemRow({
         <div className="flex items-center gap-1">
           <select
             className="h-7 rounded border bg-background px-1 text-xs"
-            defaultValue={item.moeda}
+            aria-label={`Moeda: ${item.descricao}`} defaultValue={item.moeda}
             onChange={(e) => patch({ moeda: e.target.value })}
           >
             {MOEDAS.map((m) => (
@@ -102,7 +102,7 @@ export function LineItemRow({
             <Input
               type="number"
               step="any"
-              defaultValue={item.taxaCambio}
+              aria-label={`Taxa de câmbio: ${item.descricao}`} defaultValue={item.taxaCambio}
               title="Taxa de câmbio para a moeda base"
               className="h-7 w-16 text-xs"
               onBlur={(e) => patch({ taxaCambio: Number(e.target.value) || 1 })}
@@ -114,7 +114,7 @@ export function LineItemRow({
       <TableCell>
         <div className="flex items-center gap-1">
           <Checkbox
-            checked={item.isFrengeable}
+            aria-label={`Aplicar encargos: ${item.descricao}`} checked={item.isFrengeable}
             onCheckedChange={(checked) => patch({ isFrengeable: Boolean(checked) })}
             title="Sujeito a encargos (fringeable)"
           />

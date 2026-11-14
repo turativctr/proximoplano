@@ -27,16 +27,16 @@ export function SyncSchedulingBanner({ projectId, globals }: { projectId: string
       <span>
         {dias != null ? (
           <>
-            Sincronizado com Scheduling: <span className="font-medium">{dias} dias de set</span>,{" "}
+            Sincronizado com Planejamento: <span className="font-medium">{dias} dias de set</span>,{" "}
             <span className="font-medium">{semanas} semana{semanas === 1 ? "" : "s"}</span>
           </>
         ) : (
-          "Ainda não sincronizado com Scheduling."
+          "Ainda não sincronizado com Planejamento."
         )}
       </span>
       <Button variant="outline" size="sm" onClick={handleSync} disabled={loading}>
         <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-        {loading ? "Sincronizando..." : "Sincronizar com Scheduling"}
+        {loading ? "Sincronizando..." : "Sincronizar com Planejamento"}
       </Button>
     </div>
   );

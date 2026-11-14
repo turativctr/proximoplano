@@ -1,6 +1,6 @@
 "use client";
 
-import { Clapperboard, ShieldCheck } from "lucide-react";
+import { Clapperboard, ShieldCheck, Menu } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,6 +15,9 @@ import {
 } from "@/lib/glass";
 import type { ModuleKey } from "@/lib/module-theme";
 import { cn } from "@/lib/utils";
+
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 import { NavLink } from "./nav-link";
 import { SidebarGroup } from "./sidebar-group";
@@ -105,7 +108,7 @@ function GuiaNavLink({ projectId, active }: { projectId: string; active: boolean
   );
 }
 
-export function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
+export function Sidebar({ isAdmin, mobile = false, onNavigate }: { isAdmin?: boolean; mobile?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const params = useParams<{ id?: string }>();
   const projectId = params?.id;
@@ -113,7 +116,7 @@ export function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
   return (
     <aside
       className={cn(
-        "hidden w-56 shrink-0 rounded-r-2xl md:flex md:flex-col",
+        mobile ? "flex min-h-0 flex-1 flex-col" : "hidden w-56 shrink-0 rounded-r-2xl md:flex md:flex-col",
         GLASS_CHROME_BORDER_WIDTH_R,
         GLASS_CHROME_BG,
         GLASS_CHROME_BORDER_COLOR
@@ -130,7 +133,7 @@ export function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
           Próximo Plano
         </Link>
       </div>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 pt-2">
+      <nav aria-label="Navegação principal" onClick={(event) => { if ((event.target as HTMLElement).closest("a")) onNavigate?.(); }} className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 pt-2">
         {projectId ? (
           <>
             {TOP_ITEMS.map(({ segment, label, module }) => {
@@ -186,5 +189,24 @@ export function Sidebar({ isAdmin }: { isAdmin?: boolean }) {
       </nav>
       <UserMenu />
     </aside>
+  );
+}
+
+export function MobileNavigation({ isAdmin }: { isAdmin?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  useEffect(() => setOpen(false), [pathname]);
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="outline" size="sm" className="shrink-0 md:hidden" aria-label="Abrir navegação">
+          <Menu className="mr-2 h-4 w-4" aria-hidden="true" />Menu
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="w-[min(90vw,20rem)] gap-0 p-0 pt-12" aria-describedby={undefined}>
+        <SheetTitle className="sr-only">Navegação do Próximo Plano</SheetTitle>
+        <Sidebar isAdmin={isAdmin} mobile onNavigate={() => setOpen(false)} />
+      </SheetContent>
+    </Sheet>
   );
 }

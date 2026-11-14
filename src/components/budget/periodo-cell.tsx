@@ -22,25 +22,25 @@ export function PeriodoCell({
 
   return (
     <div className="flex items-center gap-1.5">
-      <select
+      <select aria-label="Origem do período"
         className="rounded border bg-background px-1 py-1 text-xs"
         value={globalRef ?? "__manual__"}
         onChange={(e) => onChangeGlobalRef(e.target.value === "__manual__" ? null : e.target.value)}
       >
         <option value="__manual__">Manual</option>
         {globals.map((g) => (
-          <option key={g.id} value={g.chave}>
-            {g.chave}
+          <option key={g.id} value={g.descricao ? `${g.descricao} (${g.chave})` : g.chave}>
+            {g.descricao ? `${g.descricao} (${g.chave})` : g.chave}
           </option>
         ))}
       </select>
       {globalRef ? (
         <Badge variant="outline" className="border-amber-300 bg-amber-100 text-amber-900 hover:bg-amber-100">
-          G: {globalRef} = {resolved ? resolved.valor : periodo}
+          {resolved?.descricao || globalRef} = {resolved ? resolved.valor : periodo}
         </Badge>
       ) : (
         <Input
-          type="number"
+          aria-label="Período manual" type="number"
           step="any"
           className="h-7 w-16 px-1.5 text-xs"
           defaultValue={periodo}

@@ -2,10 +2,10 @@ import { CalendarBoard } from "@/components/calendar/calendar-board";
 import type { CalendarDayData, CalendarMonthSummary } from "@/components/calendar/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { getMonthGrid, toDateKey } from "@/lib/calendar-grid";
-import { tempoDeReferenciaMin } from "@/lib/estimativa";
-import { getPartidaDoProjeto } from "@/lib/estimativa-server";
+import { estimativaAgendada } from "@/lib/estimativa-agendada";
+import { getPartidaDoProjeto, getMediaDoProjeto } from "@/lib/estimativa-server";
 import { prisma } from "@/lib/prisma";
-import { numeroComParte, paginasDaEntrada, paginasParaOitavos, tempoEstimadoDaEntrada } from "@/lib/scene-parts-shared";
+import { numeroComParte, paginasDaEntrada } from "@/lib/scene-parts-shared";
 
 export default async function CalendarPage({
   params,
@@ -18,7 +18,7 @@ export default async function CalendarPage({
   const year = Number(searchParams.year) || now.getUTCFullYear();
   const month = Number(searchParams.month) || now.getUTCMonth() + 1;
 
-  const [project, shootDays, events, characters, tasks, partida] = await Promise.all([
+  const [project, shootDays, events, characters, tasks, partida, media] = await Promise.all([
     prisma.project.findUniqueOrThrow({
       where: { id: params.id },
       select: { titulo: true, sigla: true, sistemaIdElenco: true },
@@ -31,6 +31,7 @@ export default async function CalendarPage({
           include: {
             scene: {
               include: {
+                shots: true,
                 cast: {
                   include: {
                     character: { select: { id: true, idCurto: true, numeroElenco: true, personagem: true } },
@@ -39,7 +40,7 @@ export default async function CalendarPage({
                 locacao: { select: { nome: true } },
               },
             },
-            scenePart: { select: { rotulo: true, oitavos: true } },
+            scenePart: { select: { id: true, rotulo: true, oitavos: true } },
           },
         },
         callTimes: true,
@@ -53,7 +54,11 @@ export default async function CalendarPage({
     }),
     prisma.task.findMany({ where: { projectId: params.id } }),
     getPartidaDoProjeto(params.id),
+    getMediaDoProjeto(params.id),
   ]);
+
+  const tempoDaLinha = (s: (typeof shootDays)[number]["scenes"][number], fatorResetPercent: number) =>
+    estimativaAgendada(s.scene, s.scenePart, s, { partida, media, fatorResetPercent, permitirPartida: true }).min;
 
   const shootDaysByDate = new Map(
     shootDays.map((day) => {
@@ -62,11 +67,7 @@ export default async function CalendarPage({
       const totalMinutos = day.scenes.reduce(
         (sum, s) =>
           sum +
-          (tempoEstimadoDaEntrada(
-            tempoDeReferenciaMin(s.scene.tempoEstimadoMin, paginasParaOitavos(s.scene.paginas), partida, s.scene.tipo),
-            paginasParaOitavos(s.scene.paginas),
-            s.scenePart
-          ) ?? 0),
+          (tempoDaLinha(s, day.fatorResetPercent) ?? 0),
         0
       );
 
@@ -98,7 +99,7 @@ export default async function CalendarPage({
           totalPaginas: totalPaginas.toString(),
           totalMinutos,
           scenes: day.scenes.map((s) => ({ numero: numeroComParte(s.scene.numero, s.scenePart), sinopse: s.scene.sinopse })),
-          scenesSemTempoCount: day.scenes.filter((s) => !s.rodMin || s.rodMin === 0).length,
+          scenesSemTempoCount: day.scenes.filter((s) => !tempoDaLinha(s, day.fatorResetPercent)).length,
           chamadaGeral: day.chamadaGeral,
           blocoManhaInicio: day.blocoManhaInicio,
           almocoInicio: day.almocoInicio,
@@ -158,7 +159,7 @@ export default async function CalendarPage({
   const monthSummary: CalendarMonthSummary = {
     totalDiasFilmagem: shootDaysInMonth.length,
     totalPaginas: shootDaysInMonth
-      .reduce((sum, day) => sum + day.scenes.reduce((s, sd) => s + Number(sd.scene.paginas), 0), 0)
+      .reduce((sum, day) => sum + day.scenes.reduce((s, sd) => s + paginasDaEntrada(Number(sd.scene.paginas), sd.scenePart), 0), 0)
       .toString(),
     totalMinutos: shootDaysInMonth.reduce(
       (sum, day) =>
@@ -166,12 +167,7 @@ export default async function CalendarPage({
         day.scenes.reduce(
           (s, sd) =>
             s +
-            (tempoDeReferenciaMin(
-              sd.scene.tempoEstimadoMin,
-              paginasParaOitavos(sd.scene.paginas),
-              partida,
-              sd.scene.tipo
-            ) ?? 0),
+            (tempoDaLinha(sd, day.fatorResetPercent) ?? 0),
           0
         ),
       0

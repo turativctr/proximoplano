@@ -66,6 +66,7 @@ export type StripItem = {
   rodDigitado: boolean;
   /** De onde vem o tempo desta tira — a tira mostra o rótulo ao lado do número. */
   origemTempo: OrigemTempo;
+  origemTempoAutomatica?: OrigemTempo;
   scene: SceneSummary;
   shotsSummary: ShotsSummary | null;
   /** Notas operacionais do AD pra esta cena NESTA diária (SceneShootDay.observacoes) — só existe

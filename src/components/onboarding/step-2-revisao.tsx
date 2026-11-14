@@ -33,10 +33,9 @@ export function Step2Revisao({
   return (
     <div className="space-y-5">
       <div className="space-y-3">
-        <p className="text-sm font-semibold">Metadados extraídos do roteiro</p>
+        <p className="text-sm font-semibold">{scenes !== null ? "Dados extraídos do roteiro" : "Dados complementares do projeto"}</p>
         <p className="text-xs text-muted-foreground">
-          Extraído automaticamente da página de rosto do roteiro — revise e corrija antes de criar
-          o projeto.
+          {scenes !== null ? "Revise os dados extraídos da página de rosto antes de criar o projeto." : "Nenhum roteiro foi importado. Preencha os dados que já conhece; você poderá importar o roteiro depois."}
         </p>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">

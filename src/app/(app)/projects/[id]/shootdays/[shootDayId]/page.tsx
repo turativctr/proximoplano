@@ -184,7 +184,7 @@ export default async function ShootDayPage({
       }}
       totalCenas={data.scenes.length}
       totalPaginas={data.totalPaginas}
-      totalMinutos={data.scenes.reduce((sum, s) => sum + (s.tempoEstimadoMin ?? 0), 0)}
+      totalMinutos={data.scenes.reduce((sum, s) => sum + (s.origemTempo.min ?? 0), 0)}
       blocosMin={minutosEmBlocos(data.blocosDeTempo)}
       // Parte de cena dividida: só os planos atribuídos a ela (mesma regra do Rod da parte).
       cortaveisMin={data.scenes.reduce(

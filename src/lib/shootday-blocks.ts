@@ -8,8 +8,8 @@ import {
   timeToMinutes,
 } from "@/lib/schedule";
 import { intercalar, scheduleDoBloco } from "@/lib/day-timeline";
-import { tempoDeReferenciaMin } from "@/lib/estimativa";
-import { paginasParaOitavos, tempoEstimadoDaEntrada } from "@/lib/scene-parts-shared";
+import { estimativaAgendada } from "@/lib/estimativa-agendada";
+import { getMediaDoProjeto } from "@/lib/estimativa-server";
 
 /** Recalcula e persiste blocoManhaInicio/almocoInicio/almocoFim/blocoTardeInicio de uma diária a
  *  partir de chamadaGeral + Jornada do projeto (limiteAlmocoMin/duracaoAlmocoMin/preparacaoInicialMin)
@@ -40,8 +40,8 @@ export async function recalculateDayBlocks(shootDayId: string) {
       scenes: {
         orderBy: { ordem: "asc" },
         include: {
-          scene: { select: { tempoEstimadoMin: true, paginas: true, tipo: true } },
-          scenePart: { select: { oitavos: true } },
+          scene: { select: { tempoEstimadoMin: true, paginas: true, tipo: true, duracaoAlvoMin: true, shots: true } },
+          scenePart: { select: { id: true, oitavos: true } },
         },
       },
       blocos: true,
@@ -57,15 +57,12 @@ export async function recalculateDayBlocks(shootDayId: string) {
     minPorOitavo: shootDay.project.minPorOitavoPartida,
     acrescimoExteriorPercent: shootDay.project.acrescimoExteriorPercent,
   };
-  const tempoEstimado = (e: (typeof allScenes)[number]) =>
-    tempoEstimadoDaEntrada(
-      tempoDeReferenciaMin(e.scene.tempoEstimadoMin, paginasParaOitavos(e.scene.paginas), partida, e.scene.tipo),
-      paginasParaOitavos(e.scene.paginas),
-      e.scenePart
-    );
+  const media = await getMediaDoProjeto(shootDay.projectId);
   const scheduleDaCena = (e: (typeof allScenes)[number]) => ({
     prepMin: resolveEffectivePrepMin(e.prepMin),
-    rodMin: resolveEffectiveRodMin(e.rodMin, tempoEstimado(e)),
+    rodMin: resolveEffectiveRodMin(null, estimativaAgendada(e.scene, e.scenePart, e, {
+      partida, media, fatorResetPercent: shootDay.fatorResetPercent, permitirPartida: true,
+    }).min),
   });
   // Blocos de tempo (transporte etc.) ocupam horário como qualquer item da manhã — o almoço vem
   // depois deles também.

@@ -32,6 +32,7 @@ export function TagListInput({
     <div className="space-y-2">
       <div className="flex gap-2">
         <Input
+          aria-label={placeholder ?? "Novo item"}
           value={draft}
           placeholder={placeholder}
           onChange={(e) => setDraft(e.target.value)}
@@ -42,7 +43,7 @@ export function TagListInput({
             }
           }}
         />
-        <Button type="button" variant="outline" size="icon" onClick={addItem}>
+        <Button type="button" variant="outline" size="icon" aria-label={`Adicionar: ${placeholder ?? "item"}`} onClick={addItem}>
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -56,6 +57,7 @@ export function TagListInput({
               <span className="break-all">{item}</span>
               <button
                 type="button"
+                aria-label={`Remover ${item}`}
                 onClick={() => removeItem(index)}
                 className="ml-2 shrink-0 text-muted-foreground hover:text-destructive"
               >

@@ -16,12 +16,12 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
       <h1 className="flex items-center gap-1.5 text-xl font-semibold tracking-tight">
         {title}
         {help && <HelpPopover title={help.title} description={help.description} />}
       </h1>
-      {actions && <div className="flex items-center gap-2">{actions}</div>}
+      {actions && <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>}
     </div>
   );
 }

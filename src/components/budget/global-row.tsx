@@ -37,7 +37,7 @@ export function GlobalRow({ projectId, global }: { projectId: string; global: Gl
         <Input
           type="number"
           step="any"
-          defaultValue={global.valor}
+          aria-label={`Valor de ${global.descricao || global.chave}`} defaultValue={global.valor}
           className="h-7 w-24 text-xs"
           onBlur={(e) => handleValorChange(Number(e.target.value) || 0)}
         />
@@ -47,7 +47,7 @@ export function GlobalRow({ projectId, global }: { projectId: string; global: Gl
       <TableCell>
         <ConfirmDeleteDialog
           title={`Excluir ${global.chave}?`}
-          description="LineItems que usam essa chave voltarão a usar o período manual salvo. Não pode ser desfeita."
+          description="Itens do orçamento que usam essa variável voltarão a usar o período manual salvo. Não pode ser desfeita."
           onConfirm={handleDelete}
         />
       </TableCell>

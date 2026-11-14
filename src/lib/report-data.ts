@@ -1,8 +1,9 @@
+import { estimativaAgendada } from "@/lib/estimativa-agendada";
 import type { ShotPrioridade, ShotStatus, ShotTipoReset } from "@prisma/client";
 
 import { intercalar, scheduleDaTimeline, separarTimeline, type BlocoNaTimeline } from "@/lib/day-timeline";
-import { tempoDeReferenciaMin, type OrigemTempo } from "@/lib/estimativa";
-import { getMediaDoProjeto, getPartidaDoProjeto, origemDoTempoDaLinha } from "@/lib/estimativa-server";
+import { type OrigemTempo } from "@/lib/estimativa";
+import { getMediaDoProjeto, getPartidaDoProjeto } from "@/lib/estimativa-server";
 import { prisma } from "@/lib/prisma";
 import { CREW_CALL_DEPARTMENTS, defaultChamadaEquipe } from "@/lib/report-constants";
 import {
@@ -16,9 +17,7 @@ import {
   descreverOutrasPartes,
   numeroComParte,
   paginasDaEntrada,
-  paginasParaOitavos,
   planosDaParte,
-  tempoEstimadoDaEntrada,
 } from "@/lib/scene-parts-shared";
 import { resolveSinopseAD } from "@/lib/scene-sinopse";
 import { computeSceneShotTotals, resolveEffectiveResetMin } from "@/lib/shots";
@@ -443,23 +442,16 @@ export async function getShootDayReportData(projectId: string, shootDayId: strin
   // Cena sem tempo próprio (o normal desde que o import parou de preencher) cai na convenção de
   // 5min por oitavo, calculada na leitura — senão a diária não teria horário nenhum e o almoço não
   // teria onde cair. De onde o número veio fica em `origemTempo`, linha a linha.
+  const origemDaEntrada = (e: (typeof sceneEntries)[number]) =>
+    estimativaAgendada(e.scene, parteDaEntrada(e), e, { partida, media, fatorResetPercent, permitirPartida: true });
   const tempoEstimado = (e: (typeof sceneEntries)[number]) =>
-    tempoEstimadoDaEntrada(
-      tempoDeReferenciaMin(
-        e.scene.tempoEstimadoMin,
-        paginasParaOitavos(e.scene.paginas),
-        partida,
-        e.scene.tipo
-      ),
-      paginasParaOitavos(e.scene.paginas),
-      parteDaEntrada(e)
-    );
+    estimativaAgendada(e.scene, parteDaEntrada(e), { rodMin: e.rodDigitado ? null : e.rodMin, rodDigitado: false }, { partida, media, fatorResetPercent, permitirPartida: true }).min;
 
   // Blocos de tempo livres (transporte etc.) ocupam horário entre as cenas: o horário de cada cena
   // é calculado na timeline mista do bloco (manhã/tarde) e depois separado.
   const scheduleDaCena = (e: (typeof sceneEntries)[number]) => ({
     prepMin: resolveEffectivePrepMin(e.prepMin),
-    rodMin: resolveEffectiveRodMin(e.rodMin, tempoEstimado(e)),
+    rodMin: resolveEffectiveRodMin(null, origemDaEntrada(e).min),
   });
   const timelineManha = intercalar(manhaEntries, shootDay.blocos.filter((b) => b.bloco === "MANHA"));
   const timelineTarde = intercalar(tardeEntries, shootDay.blocos.filter((b) => b.bloco === "TARDE"));
@@ -485,21 +477,7 @@ export async function getShootDayReportData(projectId: string, shootDayId: strin
     const planosDoRod = parte ? scene.shots.filter((s) => s.scenePartId === parte.id) : scene.shots;
     const shotsTotal = planosDoRod.length > 0 ? computeSceneShotTotals(planosDoRod) : null;
     // Aqui a convenção É permitida: esta linha vira horário na OD, e horário precisa de número.
-    const origemTempo = origemDoTempoDaLinha({
-      rodMin: entry.rodMin,
-      rodDigitado: entry.rodDigitado,
-      duracaoAlvoMin: parte ? null : scene.duracaoAlvoMin,
-      planosMin: shotsTotal?.totalMin ?? null,
-      planos: planosDoRod.length,
-      oitavos: Math.round(paginasDaEntrada(Number(scene.paginas), parte) * 8),
-      ambiente: scene.tipo,
-      partida,
-      media,
-      // Esta linha vira horário na OD: um número precisa existir.
-      permitirPartida: true,
-      resetsMin: shotsTotal?.resetsMin ?? 0,
-      fatorResetPercent,
-    });
+    const origemTempo = origemDaEntrada(entry);
     return {
       sceneId: scene.id,
       ordem: entry.ordem,

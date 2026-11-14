@@ -232,7 +232,7 @@ export function OrdemDoDiaWizard({
         const visiveis = planosDaParte(shots, row.parte?.id ?? null);
         const doRod = row.parte ? shots.filter((s) => s.scenePartId === row.parte!.id) : shots;
         const shotsTotal = doRod.length > 0 ? computeSceneShotTotals(doRod) : null;
-        return { ...row, shots: visiveis, shotsTotal, rodMin: shotsTotal ? shotsTotal.totalMin : row.rodMin };
+        return { ...row, shots: visiveis, shotsTotal, rodMin: row.rodDigitado ? row.rodMin : (row.duracaoAlvoMin ?? shotsTotal?.totalMin ?? row.rodMin) };
       })
     );
   }
@@ -346,7 +346,7 @@ export function OrdemDoDiaWizard({
     router.refresh();
   }
 
-  const scenesSemTempoCount = sceneTimeRows.filter((r) => !r.rodMin || r.rodMin === 0).length;
+  const scenesSemTempoCount = sceneTimeRows.filter((r) => !(r.rodMin ?? r.tempoEstimadoMin)).length;
 
   function handleSalvarEGerarPdfClick() {
     if (scenesSemTempoCount > 0) {

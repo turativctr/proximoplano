@@ -1,3 +1,4 @@
+import { estimativaAgendada } from "../src/lib/estimativa-agendada";
 /**
  * Estimativa com origem visível: os três estágios (digitado, realizado deste projeto, ponto de
  * partida da produção), os rótulos e a média do projeto. Puro, sem banco.
@@ -167,6 +168,16 @@ check(
   ],
   ["def.", "planos", "média", "partida", "gravado", "—"]
 );
+
+const cenaUX = { paginas: 1.25, tipo: "INT" as const, tempoEstimadoMin: null, duracaoAlvoMin: null,
+  shots: [{ tempoTotalMin: 6, tempoResetMin: 0, takesPrevistos: 3, status: "FILMADO" as const, scenePartId: null }] };
+const contextoUX = { partida: PARTIDA_PADRAO, media: null, permitirPartida: true };
+check("regressão UX: planos de 6min vencem partida de 50min", estimativaAgendada(cenaUX, null, {rodMin: null, rodDigitado: false}, contextoUX).min, 6);
+check("regressão UX: Rod manual vence planos", estimativaAgendada(cenaUX, null, {rodMin: 17, rodDigitado: true}, contextoUX).min, 17);
+check("regressão UX: alvo vence planos", estimativaAgendada({...cenaUX, duracaoAlvoMin: 12}, null, {rodMin: 6, rodDigitado: false}, contextoUX).min, 12);
+check("regressão UX: parte não repete planos sem parte", estimativaAgendada(cenaUX, {id: "parte", oitavos: 2}, {rodMin: null, rodDigitado: false}, contextoUX).min, 10);
+check("regressão UX: resets arredondados por plano", estimativaAgendada({...cenaUX, shots: [1,2].map(() => ({...cenaUX.shots[0], tempoResetMin: 3}))}, null, {rodMin: null, rodDigitado: false}, {...contextoUX, fatorResetPercent: 50}).min, 16);
+check("regressão UX: sem fonte e sem partida permitida", estimativaAgendada({...cenaUX, shots: []}, null, {rodMin: null, rodDigitado: false}, {...contextoUX, permitirPartida: false}).kind, "SEM_BASE");
 
 console.log(`\n${falhas === 0 ? "TUDO OK" : `FALHOU (${falhas})`}`);
 process.exit(falhas === 0 ? 0 : 1);

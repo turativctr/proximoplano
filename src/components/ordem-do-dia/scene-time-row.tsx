@@ -18,8 +18,8 @@ import { formatDuracaoTake, parseDuracaoTake, RESET_LABEL } from "@/lib/shots-sh
 
 import type { SceneTimeRow, ShotSummary } from "./types";
 
-function MinutesCell({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
-  return <HoraMinInput className="h-8 w-16" vazioPermitido value={value} onCommit={onChange} />;
+function MinutesCell({ value, onChange, label, placeholder }: { value: number | null; onChange: (v: number | null) => void; label: string; placeholder?: string }) {
+  return <HoraMinInput aria-label={label} placeholder={placeholder} className="h-8 w-16" vazioPermitido value={value} onCommit={onChange} />;
 }
 
 type TakeField = "takesPrevistos" | "duracaoTakeMin";
@@ -179,11 +179,11 @@ export function SceneTimeRowItem({
           />
         </TableCell>
         <TableCell>
-          <MinutesCell value={row.prepMin} onChange={(v) => onRowChange(row.sceneId, { prepMin: v })} />
+          <MinutesCell label={`Preparação da cena ${row.numero}`} value={row.prepMin} onChange={(v) => onRowChange(row.sceneId, { prepMin: v })} />
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1.5">
-            <MinutesCell value={row.rodMin} onChange={(v) => onRowChange(row.sceneId, { rodMin: v })} />
+            <MinutesCell label={`Rodagem da cena ${row.numero}`} placeholder={(row.tempoEstimadoMin == null ? "Sem estimativa" : formatHoraMin(row.tempoEstimadoMin))} value={row.rodMin} onChange={(v) => onRowChange(row.sceneId, { rodMin: v })} />
             {row.shotsTotal && (
               <Tooltip>
                 <TooltipTrigger
@@ -203,7 +203,7 @@ export function SceneTimeRowItem({
               projeto", "convenção" ou "sem base pra estimar". Embaixo do campo, quebrando linha — na
               mesma linha, "2 planos + 3min de resets entre planos" invadia a coluna do horário. */}
           <p className="mt-0.5 max-w-36 text-[11px] leading-tight text-muted-foreground">
-            {row.rodDigitado ? "você definiu" : rotuloOrigem(row.origemTempo)}
+            {row.rodDigitado ? "você definiu" : `${row.rodMin == null ? `Sugestão: ${(row.tempoEstimadoMin == null ? "Sem estimativa" : formatHoraMin(row.tempoEstimadoMin))} · ` : ""}${rotuloOrigem(row.origemTempo)}`}
           </p>
         </TableCell>
         <TableCell className="whitespace-nowrap text-xs text-muted-foreground">

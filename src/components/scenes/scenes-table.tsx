@@ -3,6 +3,9 @@
 import { ClipboardList, Layers, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { MasterMulticenaDialog, type CenaCobrivel } from "@/components/scenes/master-multicena-dialog";
 import { SceneFormDialog } from "@/components/scenes/scene-form-dialog";
@@ -72,6 +75,14 @@ export function ScenesTable({
   cenasCobriveis: CenaCobrivel[];
 }) {
   const router = useRouter();
+  const [busca, setBusca] = useState("");
+  const normalizar = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const termos = normalizar(busca).trim().split(/\s+/).filter(Boolean);
+  const visiveis = scenes.filter((scene) => {
+    const texto = normalizar([scene.numero, scene.tipo, scene.periodo, scene.set, scene.locacao?.nome, scene.sinopse,
+      ...characters.filter((c) => scene.cast.some((v) => v.characterId === c.id)).map((c) => c.personagem)].join(" "));
+    return termos.every((termo) => texto.includes(termo));
+  });
 
   async function handleDelete(sceneId: string) {
     await fetch(`/api/projects/${projectId}/scenes/${sceneId}`, { method: "DELETE" });
@@ -79,8 +90,18 @@ export function ScenesTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          <Label htmlFor="buscar-cenas">Buscar cenas</Label>
+          <Input id="buscar-cenas" type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Número, set, locação, sinopse ou personagem" />
+        </div>
+        {busca && <Button variant="outline" onClick={() => setBusca("")}>Limpar busca</Button>}
+        <p role="status" className="py-2 text-sm text-muted-foreground">{visiveis.length} de {scenes.length} cenas</p>
+      </div>
+    <Table containerClassName="max-h-[65dvh] rounded-md border">
+
+      <TableHeader className="sticky top-0 z-10 bg-background">
         <TableRow>
           <TableHead>Cena</TableHead>
           <TableHead>Tipo</TableHead>
@@ -103,7 +124,7 @@ export function ScenesTable({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {scenes.map((scene) => (
+        {visiveis.map((scene) => (
           <TableRow key={scene.id} className={cn(scene.omitida && "text-muted-foreground")}>
             <TableCell className="font-medium">
               <span className={cn(scene.omitida && "line-through")}>{scene.numero}</span>
@@ -143,7 +164,7 @@ export function ScenesTable({
             </TableCell>
             <TableCell>
               <div className="flex justify-end gap-1">
-                <Button variant="ghost" size="icon" asChild title="Breakdown sheet">
+                <Button variant="ghost" size="icon" asChild title="Breakdown da cena" aria-label={`Abrir breakdown da cena ${scene.numero}`}>
                   <Link href={`/projects/${projectId}/scenes/${scene.id}/breakdown`}>
                     <ClipboardList className="h-4 w-4" />
                   </Link>
@@ -154,7 +175,7 @@ export function ScenesTable({
                     cenas={cenasCobriveis}
                     master={{ id: scene.id, numero: scene.numero, cobreIds: scene.cobre.map((c) => c.id) }}
                     trigger={
-                      <Button variant="ghost" size="icon" title="Cenas cobertas">
+                      <Button variant="ghost" size="icon" title="Cenas cobertas" aria-label={`Editar cenas cobertas por ${scene.numero}`}>
                         <Layers className="h-4 w-4" />
                       </Button>
                     }
@@ -168,7 +189,7 @@ export function ScenesTable({
                   partida={partida}
                   scene={scene}
                   trigger={
-                    <Button variant="ghost" size="icon" title="Editar cena">
+                    <Button variant="ghost" size="icon" title="Editar cena" aria-label={`Editar cena ${scene.numero}`}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                   }
@@ -182,7 +203,9 @@ export function ScenesTable({
             </TableCell>
           </TableRow>
         ))}
+      {visiveis.length === 0 && <TableRow><TableCell colSpan={10} className="py-8 text-center">Nenhuma cena encontrada. Tente outro termo ou limpe a busca.</TableCell></TableRow>}
       </TableBody>
     </Table>
+    </div>
   );
 }

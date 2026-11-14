@@ -1,14 +1,15 @@
+import { estimativaAgendada } from "@/lib/estimativa-agendada";
 import ExcelJS from "exceljs";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth";
-import { tempoDeReferenciaMin, textoDaPartida } from "@/lib/estimativa";
-import { getPartidaDoProjeto } from "@/lib/estimativa-server";
+import { rotuloOrigem } from "@/lib/estimativa";
+import { getPartidaDoProjeto, getMediaDoProjeto } from "@/lib/estimativa-server";
 import { gerarNomeArquivo } from "@/lib/filename";
 import { naturalCompare } from "@/lib/natural-sort";
 import { formatPaginas } from "@/lib/paginas";
-import { formatOitavos, numeroComParte, paginasParaOitavos, tempoEstimadoDaEntrada } from "@/lib/scene-parts-shared";
+import { formatOitavos, numeroComParte } from "@/lib/scene-parts-shared";
 import { findOwnedProject } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 
@@ -22,8 +23,9 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const scenes = await prisma.scene.findMany({
     where: { projectId: params.id },
     include: {
+      shots: true,
       cast: { include: { character: { select: { idCurto: true } } } },
-      shootDays: { include: { shootDay: { select: { numeroDia: true, data: true } } } },
+      shootDays: { include: { shootDay: { select: { numeroDia: true, data: true, fatorResetPercent: true } } } },
       locacao: { select: { nome: true } },
       parts: { orderBy: { ordem: "asc" } },
     },
@@ -57,7 +59,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
 
   const orderedLinhas = [...scheduled, ...unscheduled];
 
-  const partida = await getPartidaDoProjeto(params.id);
+  const [partida, media] = await Promise.all([getPartidaDoProjeto(params.id), getMediaDoProjeto(params.id)]);
 
   const columns = [
     "Dia de Set",
@@ -116,18 +118,9 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     row.getCell(11).value = scene.cast.map((c) => c.character.idCurto).join(", ");
     row.getCell(12).value = parte ? formatOitavos(parte.oitavos) : formatPaginas(scene.paginas);
     row.getCell(13).value = scene.diaNarrativo ?? "";
-    row.getCell(14).value =
-      tempoEstimadoDaEntrada(
-        tempoDeReferenciaMin(scene.tempoEstimadoMin, paginasParaOitavos(scene.paginas), partida, scene.tipo),
-        paginasParaOitavos(scene.paginas),
-        parte
-      ) ?? "";
-    row.getCell(15).value =
-      scene.tempoEstimadoMin != null
-        ? "você definiu"
-        : paginasParaOitavos(scene.paginas) > 0
-          ? textoDaPartida(partida, scene.tipo)
-          : "sem base pra estimar";
+    const origem = estimativaAgendada(scene, parte, entry ?? { rodMin: null, rodDigitado: false }, { partida, media, fatorResetPercent: entry?.shootDay.fatorResetPercent, permitirPartida: Boolean(entry) });
+    row.getCell(14).value = origem.min ?? "";
+    row.getCell(15).value = rotuloOrigem(origem);
     rowIndex += 1;
   }
 

@@ -2,8 +2,9 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -96,6 +97,29 @@ export function SceneFormDialog({
   const router = useRouter();
   const isEdit = Boolean(scene);
   const [open, setOpen] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
+  useEffect(() => {
+    if (!open || !dirty) return;
+    const preventUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ""; };
+    window.addEventListener("beforeunload", preventUnload);
+    return () => window.removeEventListener("beforeunload", preventUnload);
+  }, [open, dirty]);
+  function changeOpen(next: boolean) {
+    if (!next && loading) return;
+    if (!next && dirty) { setConfirmClose(true); return; }
+    if (next) {
+      setTipo(scene ? scene.tipo ?? TIPO_INDEFINIDO : "INT");
+      setPeriodo(scene ? scene.periodo ?? "" : "DIA");
+      setLocacaoId(scene?.locacao?.id ?? SEM_LOCACAO);
+      setNovaLocacaoNome("");
+      setSelectedCast(new Set(scene?.cast.map((c) => c.characterId) ?? []));
+      setPaginasAtuais(scene ? parsePaginas(formatPaginas(scene.paginas)) : null);
+      setError(null);
+    }
+    setDirty(false);
+    setOpen(next);
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tipo, setTipo] = useState<string>(scene ? scene.tipo ?? TIPO_INDEFINIDO : "INT");
@@ -123,6 +147,7 @@ export function SceneFormDialog({
   }
 
   function toggleCharacter(id: string) {
+    setDirty(true);
     setSelectedCast((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -135,7 +160,9 @@ export function SceneFormDialog({
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const form = new FormData(e.currentTarget);
 
+    try {
     let resolvedLocacaoId: string | null = locacaoId === SEM_LOCACAO ? null : locacaoId;
 
     if (locacaoId === CRIAR_NOVA_LOCACAO) {
@@ -158,7 +185,6 @@ export function SceneFormDialog({
       resolvedLocacaoId = created.locacao.id;
     }
 
-    const form = new FormData(e.currentTarget);
     const payload = {
       numero: form.get("numero"),
       tipo: tipo === TIPO_INDEFINIDO ? null : tipo,
@@ -198,12 +224,19 @@ export function SceneFormDialog({
       return;
     }
 
+    setDirty(false);
     setOpen(false);
     router.refresh();
+    } catch {
+      setError("Não foi possível salvar. Suas alterações continuam aqui; tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <>
+    <Dialog open={open} onOpenChange={changeOpen}>
       <DialogTrigger asChild>
         {trigger ?? (
           <Button>
@@ -217,7 +250,7 @@ export function SceneFormDialog({
           <DialogTitle>{isEdit ? `Editar cena ${scene!.numero}` : "Nova cena"}</DialogTitle>
           <DialogDescription>Preencha os dados da cena.</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onChange={() => setDirty(true)} onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="numero">Número</Label>
@@ -225,7 +258,7 @@ export function SceneFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Tipo</Label>
-              <Select value={tipo} onValueChange={setTipo}>
+              <Select value={tipo} onValueChange={(value) => { setTipo(value); setDirty(true); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -260,7 +293,7 @@ export function SceneFormDialog({
             </div>
             <div className="space-y-1.5">
               <Label>Locação</Label>
-              <Select value={locacaoId} onValueChange={setLocacaoId}>
+              <Select value={locacaoId} onValueChange={(value) => { setLocacaoId(value); setDirty(true); }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -371,5 +404,18 @@ export function SceneFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={confirmClose} onOpenChange={setConfirmClose}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Descartar alterações da cena?</AlertDialogTitle>
+          <AlertDialogDescription>Há alterações que ainda não foram salvas. Continue editando para mantê-las ou descarte para fechar.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Continuar editando</AlertDialogCancel>
+          <AlertDialogAction onClick={() => { setDirty(false); setOpen(false); }}>Descartar alterações</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

@@ -66,7 +66,7 @@ export function ExportDropdown({
             )
           }
         >
-          Topsheet PDF
+          Resumo do orçamento (PDF)
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() =>

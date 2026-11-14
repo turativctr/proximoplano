@@ -15,11 +15,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <TooltipProvider delayDuration={200}>
       <PageBackground />
-      <div className="relative z-10 flex h-screen w-screen overflow-hidden">
+      <div className="relative z-10 flex h-dvh w-full overflow-hidden">
         <Sidebar isAdmin={session.user.role === "ADMIN"} />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <Header isAdmin={session.user.role === "ADMIN"} />
+          <main className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-6">{children}</main>
         </div>
       </div>
       <Toaster richColors position="top-right" />

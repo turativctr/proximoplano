@@ -310,7 +310,7 @@ export function StripboardBoard({
 
     // Digitar na tira é a AD decidindo: marca o Rod como digitado (apagar o campo desmarca).
     const atualiza = (item: StripItem) =>
-      item.itemId === itemId ? { ...item, prepMin, rodMin, rodDigitado: rodMin != null } : item;
+      item.itemId === itemId ? { ...item, prepMin, rodMin, rodDigitado: rodMin != null, origemTempo: rodMin != null ? { kind: "DIGITADO" as const, min: rodMin } : item.origemTempoAutomatica ?? item.origemTempo } : item;
     const previousBoard = board;
     const nextBoard =
       container === "boneyard"

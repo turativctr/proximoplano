@@ -1,10 +1,10 @@
 import type { Task } from "@prisma/client";
 
-import { tempoDeReferenciaMin } from "./estimativa";
-import { getPartidaDoProjeto } from "./estimativa-server";
+import { estimativaAgendada } from "./estimativa-agendada";
+import { getPartidaDoProjeto, getMediaDoProjeto } from "./estimativa-server";
 import { computeTerminoForecast, type TerminoForecast } from "./project-forecast";
 import { prisma } from "./prisma";
-import { cenaConcluida, numeroComParte, paginasParaOitavos } from "./scene-parts-shared";
+import { cenaConcluida, numeroComParte } from "./scene-parts-shared";
 
 /** Meia-noite UTC de hoje — mesma convenção usada por `ShootDay.data`/`CalendarEvent.data`
  *  (strings "yyyy-mm-dd" parseadas como `new Date(...)` caem em meia-noite UTC), então comparar
@@ -70,26 +70,25 @@ export async function getProjectHomeState(projectId: string): Promise<ProjectHom
 
   const shootDaysComCena = await prisma.shootDay.count({ where: { projectId, scenes: { some: {} } } });
   if (shootDaysComCena === 0) {
-    const [scenes, totalLocacoes, tarefas, partida] = await Promise.all([
+    const [scenes, totalLocacoes, tarefas, partida, media] = await Promise.all([
       prisma.scene.findMany({
         where: { projectId, omitida: false },
-        select: { paginas: true, tempoEstimadoMin: true, tipo: true },
+        select: { paginas: true, tempoEstimadoMin: true, tipo: true, duracaoAlvoMin: true, shots: true },
       }),
       prisma.locacao.count({ where: { projectId, scenes: { some: {} } } }),
       getUpcomingTasks(projectId),
       getPartidaDoProjeto(projectId),
+      getMediaDoProjeto(projectId),
     ]);
+    const tempos = scenes.map((s) => estimativaAgendada(s, null, { rodMin: null, rodDigitado: false }, { partida, media, permitirPartida: true }));
     return {
       kind: "B",
       totalCenas,
       totalPaginas: scenes.reduce((sum, s) => sum + Number(s.paginas), 0),
       // Cena importada não tem tempo próprio: entra pelo ponto de partida do projeto, calculado na
       // leitura, e o card avisa quando há partida na soma (ver src/lib/estimativa.ts).
-      totalTempoMin: scenes.reduce(
-        (sum, s) => sum + (tempoDeReferenciaMin(s.tempoEstimadoMin, paginasParaOitavos(s.paginas), partida, s.tipo) ?? 0),
-        0
-      ),
-      totalTempoTemPartida: scenes.some((s) => s.tempoEstimadoMin == null && paginasParaOitavos(s.paginas) > 0),
+      totalTempoMin: tempos.reduce((sum, t) => sum + (t.min ?? 0), 0),
+      totalTempoTemPartida: tempos.some((t) => t.kind === "PARTIDA"),
       totalLocacoes,
       tarefas,
     };

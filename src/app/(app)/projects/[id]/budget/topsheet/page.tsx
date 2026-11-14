@@ -21,7 +21,7 @@ export default async function BudgetTopsheetPage({ params }: { params: { id: str
     );
   return (
     <div className="space-y-4">
-      <PageHeader title="Topsheet" />
+      <PageHeader title="Resumo do orçamento" />
       <TopsheetTab
         projectId={params.id}
         budget={data}

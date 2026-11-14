@@ -46,7 +46,7 @@ function toScheduleItem(i: DayItem) {
   return {
     prepMin: resolveEffectivePrepMin(item.prepMin),
     // Parte: o fallback é o estimado da PARTE, não o da cena inteira.
-    rodMin: resolveEffectiveRodMin(item.rodMin, item.parte ? item.parte.tempoEstimadoMin : item.scene.tempoEstimadoMin),
+    rodMin: resolveEffectiveRodMin(item.rodDigitado ? item.rodMin : null, item.origemTempo.min),
   };
 }
 
@@ -158,7 +158,7 @@ export function ShootDayColumn({
   // Parte de cena dividida conta só os oitavos dela — a outra parte está em outra diária.
   const totalPaginas = allItems.reduce((sum, item) => sum + paginasDaEntrada(Number(item.scene.paginas), item.parte), 0);
   const totalMinutos = allItems.reduce(
-    (sum, item) => sum + ((item.parte ? item.parte.tempoEstimadoMin : item.scene.tempoEstimadoMin) ?? 0),
+    (sum, item) => sum + (toScheduleItem({ tipo: "cena", item }).rodMin ?? 0),
     0
   );
   const cortaveisMin = allItems.reduce((sum, item) => sum + (item.shotsSummary?.cortaveisMin ?? 0), 0);

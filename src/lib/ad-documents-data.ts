@@ -1,9 +1,10 @@
+import { estimativaAgendada } from "@/lib/estimativa-agendada";
 import type { CharacterCategoria, SistemaIdElenco } from "@prisma/client";
 
 import { CHARACTER_CATEGORIA_ORDER } from "@/lib/character-categoria";
 import { getCharacterId } from "@/lib/character-id";
-import { tempoDeReferenciaMin, type PartidaDoProjeto } from "@/lib/estimativa";
-import { getPartidaDoProjeto } from "@/lib/estimativa-server";
+import { type PartidaDoProjeto } from "@/lib/estimativa";
+import { getPartidaDoProjeto, getMediaDoProjeto } from "@/lib/estimativa-server";
 import { compareLocacaoNome } from "@/lib/locacao";
 import { naturalCompare } from "@/lib/natural-sort";
 import { prisma } from "@/lib/prisma";
@@ -15,7 +16,7 @@ import {
   type TotalDoDia,
 } from "@/lib/realizado";
 import { formatSetLocacao, getShootDayReportData } from "@/lib/report-data";
-import { numeroComParte, paginasDaEntrada, paginasParaOitavos, tempoEstimadoDaEntrada } from "@/lib/scene-parts-shared";
+import { numeroComParte, paginasDaEntrada } from "@/lib/scene-parts-shared";
 
 type ProjectHeader = {
   titulo: string;
@@ -94,13 +95,13 @@ export type WeeklyPlanData = ProjectHeader & {
 };
 
 export async function getWeeklyPlanData(projectId: string): Promise<WeeklyPlanData> {
-  const [project, partida] = await Promise.all([getProjectHeader(projectId), getPartidaDoProjeto(projectId)]);
+  const [project, partida, media] = await Promise.all([getProjectHeader(projectId), getPartidaDoProjeto(projectId), getMediaDoProjeto(projectId)]);
   const shootDays = await prisma.shootDay.findMany({
     where: { projectId },
     orderBy: { numeroDia: "asc" },
     include: {
       scenes: {
-        include: { scene: { include: { cast: { include: { character: true } } } }, scenePart: true },
+        include: { scene: { include: { shots: true, cast: { include: { character: true } } } }, scenePart: true },
       },
     },
   });
@@ -113,16 +114,7 @@ export async function getWeeklyPlanData(projectId: string): Promise<WeeklyPlanDa
       numero: numeroComParte(s.scene.numero, s.scenePart),
       sinopse: s.scene.sinopse,
       paginas: paginasDaEntrada(Number(s.scene.paginas), s.scenePart),
-      tempoEstimadoMin: tempoEstimadoDaEntrada(
-        tempoDeReferenciaMin(
-          s.scene.tempoEstimadoMin,
-          paginasParaOitavos(s.scene.paginas),
-          partida,
-          s.scene.tipo
-        ),
-        paginasParaOitavos(s.scene.paginas),
-        s.scenePart
-      ),
+      tempoEstimadoMin: estimativaAgendada(s.scene, s.scenePart, s, { partida, media, fatorResetPercent: day.fatorResetPercent, permitirPartida: true }).min,
       elenco: s.scene.cast.map((c) => getCharacterId(c.character, project)),
     })),
     elenco: [...new Set(day.scenes.flatMap((s) => s.scene.cast.map((c) => getCharacterId(c.character, project))))],
