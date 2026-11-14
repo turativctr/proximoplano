@@ -5,7 +5,7 @@ const os = require('node:os');
 const { spawnSync } = require('node:child_process');
 const project = path.resolve(__dirname, '..');
 const providers = {
-  vercel: { version: '65.14.0', args: ['project', 'inspect', 'filmmanager', '--scope', 'victor-turati'] },
+  vercel: { version: '65.14.0', args: ['project', 'inspect', 'proximoplano', '--scope', 'victor-turati'] },
   neon: { version: '9.3.2', args: ['branches', 'list', '--project-id', 'crimson-wildflower-33344350', '--no-analytics'] },
 };
 function cachedCli(name, version) {

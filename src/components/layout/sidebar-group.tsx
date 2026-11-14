@@ -9,7 +9,9 @@ import { cn } from "@/lib/utils";
 
 import { NavLink } from "./nav-link";
 
-const STORAGE_PREFIX = "film-manager:sidebar-group-open:";
+const STORAGE_PREFIX = "proximoplano:sidebar-group-open:";
+// Compatibilidade: mantém a preferência salva antes da mudança de nome.
+const LEGACY_STORAGE_PREFIX = "film-manager:sidebar-group-open:";
 
 /** Grupo colapsável da sidebar (Cadastro/Preparação/Orçamento) — expande só por clique (nunca
  *  hover, o app roda em iPad e hover não existe no toque). O grupo que contém a página atual abre
@@ -38,7 +40,9 @@ export function SidebarGroup({
   const [storedOpen, setStoredOpen] = useState(false);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_PREFIX + storageKey);
+    const stored = window.localStorage.getItem(STORAGE_PREFIX + storageKey)
+      ?? window.localStorage.getItem(LEGACY_STORAGE_PREFIX + storageKey);
+    if (stored !== null) window.localStorage.setItem(STORAGE_PREFIX + storageKey, stored);
     if (stored === "1") setStoredOpen(true);
   }, [storageKey]);
 

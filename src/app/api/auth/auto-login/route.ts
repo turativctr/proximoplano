@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /** App roda para um único usuário local — sem tela de login, a sessão é criada automaticamente aqui. */
-const DEMO_EMAIL = "demo@filmmanager.local";
+const DEMO_EMAIL = "demo@proximoplano.local";
 
 const SESSION_COOKIE_NAME = process.env.NEXTAUTH_URL?.startsWith("https://")
   ? "__Secure-next-auth.session-token"

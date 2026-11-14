@@ -17,7 +17,7 @@ function toDecimalScenes(scenes: SceneSeed[]) {
   return scenes.map((scene) => ({ ...scene, paginas: parsePaginas(scene.paginas)!.toString() }));
 }
 
-const DEMO_EMAIL = "demo@filmmanager.local";
+const DEMO_EMAIL = "demo@proximoplano.local";
 const DEMO_PASSWORD = "demo12345";
 
 type SceneSeed = {

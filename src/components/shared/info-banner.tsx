@@ -6,7 +6,9 @@ import { useEffect, useState } from "react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
-const STORAGE_PREFIX = "film-manager:banner-open:";
+const STORAGE_PREFIX = "proximoplano:banner-open:";
+// Compatibilidade: mantém a preferência salva antes da mudança de nome.
+const LEGACY_STORAGE_PREFIX = "film-manager:banner-open:";
 
 /** Banner informativo colapsável — aberto na primeira visita a cada página (chave ausente no
  *  localStorage), lembra o estado colapsado/aberto localmente depois disso. */
@@ -22,7 +24,9 @@ export function InfoBanner({
   const [open, setOpen] = useState(true);
 
   useEffect(() => {
-    const stored = window.localStorage.getItem(STORAGE_PREFIX + storageKey);
+    const stored = window.localStorage.getItem(STORAGE_PREFIX + storageKey)
+      ?? window.localStorage.getItem(LEGACY_STORAGE_PREFIX + storageKey);
+    if (stored !== null) window.localStorage.setItem(STORAGE_PREFIX + storageKey, stored);
     if (stored === "0") setOpen(false);
   }, [storageKey]);
 

@@ -145,4 +145,4 @@ export function isValidTema(value: string): value is Tema {
 /** Evento disparado sempre que o tema muda no cliente (ver applyTheme em use-theme.ts) — permite
  *  que componentes como PageBackground reajam na hora, sem precisar de um Context Provider global
  *  só pra isso. */
-export const THEME_CHANGE_EVENT = "filmmanager:theme-change";
+export const THEME_CHANGE_EVENT = "proximoplano:theme-change";

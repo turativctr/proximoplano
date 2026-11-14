@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   });
   if (token) return NextResponse.next();
 
-  // Atalho de auto-login (sem senha, sempre como demo@filmmanager.local) só existe em
+  // Atalho de auto-login (sem senha, sempre como demo@proximoplano.local) só existe em
   // desenvolvimento local — em produção, qualquer visitante sem sessão precisa passar pelo
   // /login de verdade (ver src/app/login/page.tsx + CredentialsProvider em src/lib/auth.ts).
   const destination = process.env.NODE_ENV === "development" ? "/api/auth/auto-login" : "/login";

@@ -28,8 +28,9 @@ arquivo no mesmo commit.
 (AD)** e da produção. Vocabulário de set brasileiro: diária, Ordem do Dia (OD), decupagem, plano,
 coverage, master, figuração, desprodução, oitavos de página, Rod (tempo de rodagem), prep.
 
-- O repositório/pasta ainda se chama `filmmanager` / "Film Manager" (nome antigo). O nome do
-  produto é **Próximo Plano** — não "Próxima Cena" (outro produto).
+- Nome técnico: `proximoplano`; nome do produto: **Próximo Plano** (distinto de Próxima Cena).
+- O repositório GitHub ainda é `turativctr/filmmanager`: renomeação pendente de autenticação.
+  Não altere o remote até confirmar a renomeação no GitHub.
 - Usuário principal e dono: diretor/AD que testa como caixa-preta e manda relatórios de bug com
   hipótese de causa. **O sintoma é confiável; a causa sugerida nem sempre.** Leia o código e os
   dados antes de corrigir e diga claramente se a hipótese estiver errada.
@@ -69,7 +70,7 @@ coverage, master, figuração, desprodução, oitavos de página, Rod (tempo de 
 npm install                      # postinstall: prisma generate + copia assets do pdfjs p/ public/pdfjs
 cp .env.example .env             # DATABASE_URL (Postgres local), NEXTAUTH_SECRET, NEXTAUTH_URL=http://localhost:3000
 npx prisma migrate dev           # aplica as migrations no banco LOCAL
-npm run db:seed                  # cria demo@filmmanager.local + projetos Ressaca e Viageiro
+npm run db:seed                  # cria demo@proximoplano.local + projetos Ressaca e Viageiro
 npm run dev                      # http://localhost:3000
 ```
 - `db:seed` **apaga todos os projetos do usuário demo** antes de recriar. Os projetos reais
@@ -77,7 +78,7 @@ npm run dev                      # http://localhost:3000
 
 ### Mac do dono (sem Homebrew/sudo)
 - Node em `~/.local/node/bin`; Postgres.app em `~/Applications/Postgres.app/Contents/Versions/latest/bin`;
-  dados em `~/.local/postgres-data`, porta 5432, auth trust, banco `film_manager`.
+  dados em `~/.local/postgres-data`, porta 5432, auth trust, banco `proximoplano`.
 - Shells não interativos podem não ter esse PATH:
   `export PATH="$HOME/.local/node/bin:$HOME/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"`
 - Postgres não sobe sozinho após reiniciar:
@@ -89,19 +90,19 @@ npm run dev                      # http://localhost:3000
 
 ### Vínculos locais com Vercel e Neon (configurados em 14/11/2026)
 - Pasta de trabalho atual: `~/Documents/Codex/Projetos/proximo-plano`; a pasta antiga foi preservada.
-- `.vercel/project.json`: projeto **filmmanager**, `prj_OAReEYs5U5A6PJVHlAC6zubXZPDM`, equipe `victor-turati`.
-- `.neon`: projeto **Film Manager**, `crimson-wildflower-33344350`, região `aws-sa-east-1`, branch **production**.
+- `.vercel/project.json`: projeto **proximoplano**, `prj_OAReEYs5U5A6PJVHlAC6zubXZPDM`, equipe `victor-turati`.
+- `.neon`: projeto **proximoplano**, `crimson-wildflower-33344350`, região `aws-sa-east-1`, branch **production**.
 - Esses arquivos são locais e ignorados no Git. Credenciais permanecem nas sessões globais das CLIs; não copie tokens para documentação.
 - `npm run cloud:status` consulta os dois provedores; `vercel:status` e `neon:status` consultam separadamente. São comandos de leitura, sem deploy e sem SQL.
 - `Verificar conexões.command` prepara o PATH e executa essas consultas pela pasta nova.
 - **O contexto Neon aponta para produção; não é o banco de desenvolvimento.** Não execute `neon env pull`, `vercel env pull` ou comandos SQL/migrations contra esse contexto por iniciativa própria. O localhost deve continuar no Postgres local.
 - `npm run local:check` verifica a configuração efetiva do Next, incluindo `.env.local` e sobrescritas. O iniciador recusa URLs de banco remoto.
-- Para reconstruir apenas os vínculos: `npx vercel@65.14.0 link --yes --scope victor-turati --project filmmanager` e `npx neon@9.3.2 link --project-id crimson-wildflower-33344350 --org-id org-solitary-meadow-37945301 --branch production --yes --no-env-pull --no-config --no-analytics`.
+- Para reconstruir apenas os vínculos: `npx vercel@65.14.0 link --yes --scope victor-turati --project proximoplano` e `npx neon@9.3.2 link --project-id crimson-wildflower-33344350 --org-id org-solitary-meadow-37945301 --branch production --yes --no-env-pull --no-config --no-analytics`.
 - Vincular não publica. Continuam valendo as restrições de push/deploy e de produção acima.
 
 ### Autenticação
 - **Desenvolvimento:** sem login. `src/middleware.ts` manda quem não tem sessão para
-  `/api/auth/auto-login`, que emite um JWT para o e-mail fixo `demo@filmmanager.local`
+  `/api/auth/auto-login`, que emite um JWT para o e-mail fixo `demo@proximoplano.local`
   (`DEMO_EMAIL` em `src/app/api/auth/auto-login/route.ts`). Não troque por `findFirst()` — há
   vários usuários no banco.
 - **Produção:** `/login` e `/register`; a rota de auto-login é desligada quando
@@ -355,3 +356,8 @@ Decididas com o dono, quase todas depois de bugs reais. Não "simplifique" nem p
   + `rodDigitado`, sem histórico) — propor o schema ao dono antes.
 - Banco local tem projetos de teste descartáveis ("Teste…", "Debug…", "Familiar Insônia…") e o
   projeto real *ANTES DO MEU NOME NOS CRÉDITOS*. Projetos como *ECLIPSE* existem só em produção.
+
+### Padronização do nome (14/11/2026)
+- Banco local renomeado para `proximoplano`; usuário demo atualizado sem mudar seu ID ou projetos.
+- Prefixos antigos de localStorage são lidos somente para preservar preferências existentes.
+- Aliases antigos da Vercel foram preservados para não quebrar links; não houve publicação.
