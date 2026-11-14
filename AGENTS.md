@@ -29,8 +29,7 @@ arquivo no mesmo commit.
 coverage, master, figuração, desprodução, oitavos de página, Rod (tempo de rodagem), prep.
 
 - Nome técnico: `proximoplano`; nome do produto: **Próximo Plano** (distinto de Próxima Cena).
-- O repositório GitHub ainda é `turativctr/filmmanager`: renomeação pendente de autenticação.
-  Não altere o remote até confirmar a renomeação no GitHub.
+- Repositório GitHub: `turativctr/proximoplano`; remote local e vínculo Git da Vercel atualizados.
 - Usuário principal e dono: diretor/AD que testa como caixa-preta e manda relatórios de bug com
   hipótese de causa. **O sintoma é confiável; a causa sugerida nem sempre.** Leia o código e os
   dados antes de corrigir e diga claramente se a hipótese estiver errada.
@@ -59,7 +58,7 @@ coverage, master, figuração, desprodução, oitavos de página, Rod (tempo de 
 - dnd-kit (drag-and-drop), **@react-pdf/renderer 4** (PDFs), ExcelJS (xlsx), fast-xml-parser
   (FDX), **pdfjs-dist no navegador** (import de PDF), `diff`, zod, next-pwa.
 - Hospedagem: **Vercel** + **Neon** (Postgres sa-east-1, host `-pooler`).
-- Repositório `github.com/turativctr/filmmanager`, branch única `main`.
+- Repositório `github.com/turativctr/proximoplano`, branch única `main`.
 
 ---
 
