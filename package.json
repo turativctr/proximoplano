@@ -29,7 +29,10 @@
     "vercel:status": "node scripts/cloud-status.cjs vercel",
     "neon:status": "node scripts/cloud-status.cjs neon",
     "cloud:status": "node scripts/cloud-status.cjs",
-    "local:check": "node scripts/check-local-env.cjs"
+    "local:check": "node scripts/check-local-env.cjs",
+    "verify:shot-import": "tsx scripts/verify-shot-import.ts",
+    "verify:daily-breakdown": "tsx scripts/verify-daily-breakdown.ts",
+    "verify:daily-scenes": "tsx scripts/verify-daily-scenes.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

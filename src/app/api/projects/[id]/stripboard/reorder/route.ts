@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
 import { authOptions } from "@/lib/auth";
-import { parsePersonagemPrefixed, type CharacterLike } from "@/lib/ordem-do-dia";
+import { computePrefillObservacoes } from "@/lib/scene-scheduling-notes";
 import { prisma } from "@/lib/prisma";
 import { findOwnedProject } from "@/lib/project-access";
 import { dadosDaReordenacao } from "@/lib/scene-shoot-day-fields";
@@ -12,41 +12,6 @@ import { stripboardReorderSchema } from "@/lib/validation/stripboard";
 // Cada arraste reescreve a diária inteira (duas fases de `ordem`) e o Boneyard, uma consulta por
 // linha. Contra o Neon em São Paulo isso passa dos 5s padrão de transação interativa do Prisma.
 const PRISMA_TX_TIMEOUT_MS = 30_000;
-
-/** Alertas automáticos detectados no breakdown/planos da cena, usados pra pré-preencher
- *  SceneShootDay.observacoes na primeira vez que a cena é agendada num dia — ver PATCH desta
- *  rota: o pré-preenchimento só roda pra pares (sceneId, shootDayId) genuinamente novos, nunca
- *  sobrescrevendo notas que o AD já tenha editado. */
-async function computePrefillObservacoes(sceneId: string, characters: CharacterLike[]): Promise<string | null> {
-  const [breakdown, shots] = await Promise.all([
-    prisma.breakdownSheet.findUnique({ where: { sceneId } }),
-    prisma.shot.findMany({ where: { sceneId }, orderBy: { ordem: "asc" }, select: { numero: true, tipoReset: true } }),
-  ]);
-
-  const lines: string[] = [];
-
-  if (breakdown?.comidaCena.length) {
-    lines.push(`Arte: ${breakdown.comidaCena.join(", ")}`);
-  }
-
-  const efeitoEspecial = breakdown?.make.filter((m) => m.toLowerCase().includes("efeito")) ?? [];
-  if (efeitoEspecial.length) {
-    lines.push(`Make: ${efeitoEspecial.join(", ")}`);
-  }
-
-  for (const raw of breakdown?.habilidades ?? []) {
-    const { character, descricao } = parsePersonagemPrefixed(raw, characters);
-    if (character) lines.push(`Elenco: ${character.personagem} — ${descricao}`);
-  }
-
-  for (let i = 1; i < shots.length; i++) {
-    if (shots[i].tipoReset === "RESET_COMPLETO") {
-      lines.push(`Atenção: reset completo entre P${shots[i - 1].numero} e P${shots[i].numero} — verificar continuidade`);
-    }
-  }
-
-  return lines.length > 0 ? lines.join("\n") : null;
-}
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions);

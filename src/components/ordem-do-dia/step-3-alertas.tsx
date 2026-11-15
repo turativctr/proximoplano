@@ -54,7 +54,7 @@ export function Step3Alertas({
         description="Os breakdowns das cenas deste dia ainda não têm figurino, make, props ou habilidades preenchidos."
         actions={
           <Button asChild variant="outline" size="sm">
-            <Link href={`/projects/${projectId}/shootdays/${shootDayId}`}>Ir para as cenas do dia</Link>
+            <Link href={`/projects/${projectId}/shootdays/${shootDayId}/breakdown`}>Preparar breakdown da diária</Link>
           </Button>
         }
       />

@@ -14,6 +14,7 @@ import { AlertTriangle, ChevronDown, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { ImportShotsDialog } from "@/components/breakdown/import-shots-dialog";
 import { NewShotDialog } from "@/components/breakdown/new-shot-dialog";
 import { SortableShotRow } from "@/components/breakdown/shot-row";
 import { SceneTempoAlvo } from "@/components/shots/scene-tempo-alvo";
@@ -254,7 +255,7 @@ export function ShotListPanel({
   }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen} className="rounded-lg border bg-card">
+    <Collapsible id="planos" open={open} onOpenChange={setOpen} className="scroll-mt-32 rounded-lg border bg-card">
       <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
         <CollapsibleTrigger className="flex items-center gap-1.5 text-base font-semibold">
           <ChevronDown className={cn("h-4 w-4 transition-transform", open && "rotate-180")} />
@@ -269,6 +270,7 @@ export function ShotListPanel({
       </div>
 
       <CollapsibleContent className="space-y-3 px-4 pb-4">
+        <ImportShotsDialog projectId={projectId} sceneId={sceneId} sceneNumero={sceneNumero} shots={shots} onCreated={setShots} />
         <SceneTempoAlvo
           projectId={projectId}
           sceneId={sceneId}

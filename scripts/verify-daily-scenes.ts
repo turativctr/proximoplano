@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { sceneOptionKey, toggleDailySceneSelection, type DailySceneOption } from "../src/lib/daily-scene-picker";
+const option = (sceneId: string, part: string | null = null, blocked: string | null = null): DailySceneOption => ({ key: sceneOptionKey(sceneId, part), sceneId, scenePartId: part, numero: sceneId, part, blocked, set: null, locacao: null, sinopse: null, paginas: 1 });
+const a = option("1"), b = option("2"), partA = option("3", "A"), partB = option("3", "B");
+assert.deepEqual(toggleDailySceneSelection([], a), [a]);
+assert.deepEqual(toggleDailySceneSelection([a], b), [a, b]);
+assert.deepEqual(toggleDailySceneSelection([a, b], a), [b]);
+assert.deepEqual(toggleDailySceneSelection([partA], partB), [partA], "uma parte por cena na diária");
+assert.deepEqual(toggleDailySceneSelection([a], option("4", null, "Agendada")), [a]);
+const hundred = Array.from({ length: 100 }, (_, i) => option(String(i)));
+assert.equal(toggleDailySceneSelection(hundred, option("101")).length, 100);
+assert.equal(toggleDailySceneSelection(hundred, hundred[0]).length, 99);
+console.log("Seleção de cenas: lote, alternância, partes, bloqueios e limite OK.");

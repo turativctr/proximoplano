@@ -395,3 +395,38 @@ Decididas com o dono, quase todas depois de bugs reais. Não "simplifique" nem p
   timers ou animações contínuas. `theme-choice` respeita prefers-reduced-motion.
 - `--chrome-light-max` é um limite conservador de luz para verificar o texto sobre a decoração;
   a faixa do Thriller fica nos 4px superiores, fora do texto.
+
+### Importação de planos em lote (local, 14/11/2026)
+- Cena → Breakdown → Planos → Adicionar vários planos. Âncora `#planos`.
+- `src/lib/shot-import/`: texto/tabela colados, XLSX/DOCX e PDF com texto; leitura no navegador,
+  sem envio a IA. Uma cena/aba por lote, até 200 planos. Imagens permanecem no arquivo original.
+- Revisão permite associar colunas/cabeçalho, editar, separar/unir/excluir itens e confirmar destino.
+  Números Excel armazenados como data exigem confirmação. Tempo é um padrão explícito do app.
+- POST `shots/import`: lote atômico, IDs de requisição repetíveis, sem renumerar planos existentes.
+  DELETE com comprovante assinado desfaz somente o lote sem alterações/agendamento posteriores.
+  Sem migration. Fonte e campos extras são preservados em `notasDirecao`.
+- `npm run verify:shot-import`; opcionalmente `SHOT_IMPORT_XLSX` e `SHOT_IMPORT_PDF_LINES`
+  apontam para exemplos privados fora do Git. Não commitar os arquivos de produção usados no teste.
+
+### Breakdown por diária (local, 14/11/2026)
+- Entrada pelo painel da diária ou Stripboard → Breakdown da diária; rota `/shootdays/[id]/breakdown`.
+- Tabela por departamento, inclusão aditiva em várias cenas, resumo agrupado e visão contínua por cena
+  com planos expansíveis. Usa os mesmos dados de BreakdownSheet/SceneCast/ExtraScene, sem migration.
+- PATCH `shoot-days/[id]/breakdown`: lote atômico serializável, escopo restrito às cenas do dia e
+  vínculos do projeto; compara o valor anterior de cada campo para detectar edição concorrente.
+- Salvar é explícito. Desfazer último salvamento funciona enquanto a tela estiver aberta e somente
+  quando os campos não mudaram depois. Não escreve agenda, execução, Rod ou observações operacionais.
+- Vazio significa “sem informação”; não há estado persistido de revisão por departamento nesta versão.
+- Itens alimentam os alertas da OD e a Análise Técnica. O PDF da OD continua imprimindo observações
+  operacionais/gerais, não copia automaticamente o breakdown completo.
+- `npm run verify:daily-breakdown`; testar também gravação/retorno/desfazer pela API e conferir no banco local.
+
+### Inclusão de cenas pela diária (local, 14/11/2026)
+- “Adicionar cenas” no painel da diária e no breakdown abre o mesmo seletor com busca e seleção múltipla.
+- GET/POST `shoot-days/[id]/scenes`: lista cenas inteiras/partes; adiciona somente opções não agendadas,
+  nunca move de outro dia. Omitidas não entram; uma parte por cena por diária; até 100 por lote.
+- Inclusão atômica serializável, repetível sem duplicar; novas ordens ficam após cenas e blocos existentes.
+  Horários derivados são recalculados pelo helper habitual. Execução, Rod manual e notas existentes ficam intactos.
+- `scene-scheduling-notes.ts` compartilha o preenchimento inicial de observações com o Stripboard.
+- O breakdown preserva rascunhos ao atualizar as cenas. O painel de progresso remonta quando muda a lista de cenas.
+- `npm run verify:daily-scenes`; além da suíte, testar inclusão real, conflitos simultâneos, partes e preservação no banco local.

@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import { DAILY_FIELDS, addDailyValue, groupDailyValues, sameValues, type DailyValues } from "../src/lib/daily-breakdown-shared";
+const empty = () => Object.fromEntries(DAILY_FIELDS.map((f) => [f.key, [] as string[]])) as DailyValues;
+assert.deepEqual(addDailyValue(["[CRÍTICO] Taça"], "[CRÍTICO] Taça", "objetos"), ["[CRÍTICO] Taça"]);
+assert.deepEqual(addDailyValue(["Ana_R1"], "Pedro_R2", "figurino"), ["Ana_R1", "Pedro_R2"]);
+assert.deepEqual(addDailyValue(["Nota original\nDetalhe"], "Luz lateral", "notasFoto"), ["Nota original\nDetalhe\nLuz lateral"]);
+assert.deepEqual(addDailyValue([], "  ", "objetos"), []);
+const a = { id: "a", values: { ...empty(), objetos: ["Taça", "Taça", "[CRÍTICO] Chave"] } };
+const b = { id: "b", values: { ...empty(), objetos: ["Taça"] } };
+assert.deepEqual(groupDailyValues([a, b], "objetos"), [{ value: "Taça", sceneIds: ["a", "b"] }, { value: "[CRÍTICO] Chave", sceneIds: ["a"] }]);
+assert.equal(sameValues(["a"], ["b"]), false);
+assert.equal(sameValues([], []), true);
+assert.equal(new Set(DAILY_FIELDS.map((f) => f.key)).size, DAILY_FIELDS.length);
+console.log("Breakdown por diária: inclusão aditiva, agrupamento, convenções e comparação de conflitos OK.");

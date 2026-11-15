@@ -238,6 +238,9 @@ export function ShootDayColumn({
           <div className="flex flex-wrap items-center gap-1">
             <ResetFatorControl value={day.fatorResetPercent} onChange={handleFatorChange} />
             <Button variant="outline" size="sm" asChild>
+              <Link href={`/projects/${projectId}/shootdays/${day.id}/breakdown`}>Breakdown da diária</Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
               <Link href={`/projects/${projectId}/shootdays/${day.id}/ordem-do-dia`}>
                 <ClipboardList className="mr-1.5 h-3.5 w-3.5" />
                 Ordem do dia

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -373,6 +375,7 @@ export function OrdemDoDiaWizard({
         actions={<ResetFatorControl value={shootDay.fatorResetPercent} onChange={handleFatorChange} />}
       />
 
+      <Link className="inline-block text-sm underline" href={`/projects/${projectId}/shootdays/${shootDay.id}/breakdown`}>Preparar o breakdown das cenas desta diária</Link>
       <div className="flex items-center gap-2">
         {STEPS.map((label, index) => {
           const num = index + 1;

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { AddDailyScenesDialog } from "@/components/breakdown/add-daily-scenes-dialog";
 import { DailyProgressReportDialog } from "@/components/ad-documents/daily-progress-report-dialog";
 import { JornadaSimplificada } from "@/components/ordem-do-dia/jornada-simplificada";
 import { LancarRealizadoDialog, type LinhaRealizado } from "@/components/ordem-do-dia/lancar-realizado-dialog";
@@ -241,6 +242,14 @@ export function ShootDayDashboard({
         }
       />
 
+      <section className="flex flex-wrap items-center justify-between gap-4 border-y py-4">
+        <div>
+          <h2 className="font-semibold">Prepare o dia, um departamento por vez</h2>
+          <p className="text-sm text-muted-foreground">Reúna elenco, objetos, figurino e notas das cenas desta diária antes de revisar a OD.</p>
+        </div>
+        <div className="flex flex-wrap gap-2"><AddDailyScenesDialog projectId={projectId} shootDayId={shootDay.id} numeroDia={shootDay.numeroDia} /><Button asChild><Link href={`/projects/${projectId}/shootdays/${shootDay.id}/breakdown`}>Preparar breakdown da diária</Link></Button></div>
+      </section>
+
       <div className="grid grid-cols-4 gap-3">
         <Card>
           <CardContent className="p-4">
@@ -337,6 +346,7 @@ export function ShootDayDashboard({
       <ComparacaoPlanejadoRealizado linhas={linhasRealizado} />
 
       <SceneProgressPanel
+        key={sceneProgress.map((scene) => scene.sceneId).join(":")}
         projectId={projectId}
         shootDayId={shootDay.id}
         data={shootDay.data}
