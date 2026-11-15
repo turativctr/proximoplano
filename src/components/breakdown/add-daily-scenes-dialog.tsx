@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { formatPaginas } from "@/lib/paginas";
 import { toggleDailySceneSelection, type DailySceneOption } from "@/lib/daily-scene-picker";
+import { NewDailySceneDialog } from "@/components/breakdown/new-daily-scene-dialog";
 
 export function AddDailyScenesDialog({ projectId, shootDayId, numeroDia, onAdded }: {
   projectId: string; shootDayId: string; numeroDia: number; onAdded?: () => Promise<void>;
@@ -70,7 +71,7 @@ export function AddDailyScenesDialog({ projectId, shootDayId, numeroDia, onAdded
     finally { clearTimeout(timeout); submitting.current = false; setSaving(false); }
   }
 
-  return <Dialog open={open} onOpenChange={changeOpen}>
+  return <><NewDailySceneDialog projectId={projectId} shootDayId={shootDayId} numeroDia={numeroDia} onAdded={onAdded} /><Dialog open={open} onOpenChange={changeOpen}>
     <DialogTrigger asChild><Button variant="outline">Adicionar cenas</Button></DialogTrigger>
     <DialogContent className="flex max-h-[90dvh] w-[calc(100%-1rem)] max-w-3xl flex-col gap-3 overflow-hidden p-4 sm:p-6" onEscapeKeyDown={(e) => { if (saving) e.preventDefault(); }} onPointerDownOutside={(e) => { if (saving) e.preventDefault(); }}>
       <DialogHeader className="shrink-0 pr-6"><DialogTitle>Adicionar cenas à diária {numeroDia}</DialogTitle><DialogDescription>Escolha cenas ou partes ainda sem diária. Elas entram no final do dia; os horários são recalculados conforme a jornada.</DialogDescription></DialogHeader>
@@ -96,7 +97,7 @@ export function AddDailyScenesDialog({ projectId, shootDayId, numeroDia, onAdded
               </span>
             </label>
           </li>;
-        })}</ul> : loaded && <div className="space-y-2 p-6 text-center text-sm"><p>{needle ? "Nenhuma cena corresponde à busca." : available === 0 ? "Não há cenas disponíveis para adicionar." : "Nenhuma cena para mostrar."}</p>{needle && <Button variant="link" onClick={() => setQuery("")}>Limpar busca</Button>}{!showScheduled && available === 0 && <p className="text-muted-foreground">Mostre as cenas já agendadas para conferir onde estão. Você pode cadastrar novas cenas na seção Cenas do projeto.</p>}</div>}
+        })}</ul> : loaded && <div className="space-y-2 p-6 text-center text-sm"><p>{needle ? "Nenhuma cena corresponde à busca." : available === 0 ? "Não há cenas disponíveis para adicionar." : "Nenhuma cena para mostrar."}</p>{needle && <Button variant="link" onClick={() => setQuery("")}>Limpar busca</Button>}{!showScheduled && available === 0 && <p className="text-muted-foreground">Mostre as cenas já agendadas para conferir onde estão. Para cadastrar uma cena agora, feche este seletor e use “Nova cena nesta diária”.</p>}</div>}
       </div>
       <div className="shrink-0 space-y-2">
         {selected.length > 0 && <div className="flex items-start justify-between gap-2 text-xs"><p className="max-h-16 overflow-y-auto break-words text-muted-foreground">Selecionadas ({selected.length}): {selected.map((o) => `${o.numero}${o.part ? ` (${o.part})` : ""}`).join(", ")}{selected.some((item) => !visible.some((o) => o.key === item.key)) ? " · Inclui seleções ocultas pela busca." : ""}</p><Button size="sm" variant="ghost" disabled={saving} onClick={() => setSelected([])}>Limpar</Button></div>}
@@ -104,5 +105,5 @@ export function AddDailyScenesDialog({ projectId, shootDayId, numeroDia, onAdded
         <DialogFooter className="gap-2"><Button variant="outline" disabled={saving} onClick={() => changeOpen(false)}>Cancelar</Button><Button disabled={loading || saving || !selected.length} onClick={add}>{saving ? "Adicionando…" : `Adicionar ${selected.length || ""} ${selected.length === 1 ? "cena" : "cenas"}`}</Button></DialogFooter>
       </div>
     </DialogContent>
-  </Dialog>;
+  </Dialog></>;
 }

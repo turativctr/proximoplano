@@ -430,3 +430,12 @@ Decididas com o dono, quase todas depois de bugs reais. Não "simplifique" nem p
 - `scene-scheduling-notes.ts` compartilha o preenchimento inicial de observações com o Stripboard.
 - O breakdown preserva rascunhos ao atualizar as cenas. O painel de progresso remonta quando muda a lista de cenas.
 - `npm run verify:daily-scenes`; além da suíte, testar inclusão real, conflitos simultâneos, partes e preservação no banco local.
+
+### Criação de cena pela diária (local, 14/11/2026)
+- “Nova cena nesta diária” no painel e no breakdown cadastra e agenda em uma única transação serializável.
+- POST `shoot-days/[id]/scenes/new`: UUID de requisição vira ID da cena para repetir sem duplicar;
+  número único no projeto, campos básicos validados, sem vínculos externos e sem migration.
+- Número obrigatório; páginas opcionais começam em zero. Não inventa tempo de rodagem.
+  Só acrescenta ao final da agenda e recalcula horários derivados; preserva execução e Rod manual.
+- Falha de conexão mantém formulário e identidade da tentativa; campos ficam bloqueados até confirmar.
+  Cancelamento com rascunho pede confirmação. O breakdown mantém seus rascunhos ao receber a nova cena.

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { newDailySceneSchema } from "../src/lib/validation/daily-scene";
 import { sceneOptionKey, toggleDailySceneSelection, type DailySceneOption } from "../src/lib/daily-scene-picker";
 const option = (sceneId: string, part: string | null = null, blocked: string | null = null): DailySceneOption => ({ key: sceneOptionKey(sceneId, part), sceneId, scenePartId: part, numero: sceneId, part, blocked, set: null, locacao: null, sinopse: null, paginas: 1 });
 const a = option("1"), b = option("2"), partA = option("3", "A"), partB = option("3", "B");
@@ -11,3 +12,18 @@ const hundred = Array.from({ length: 100 }, (_, i) => option(String(i)));
 assert.equal(toggleDailySceneSelection(hundred, option("101")).length, 100);
 assert.equal(toggleDailySceneSelection(hundred, hundred[0]).length, 99);
 console.log("Seleção de cenas: lote, alternância, partes, bloqueios e limite OK.");
+
+const creation = { requestId: "30b0fbe8-f184-48bd-bc74-86ab40913360", numero: " 12A ", tipo: "INT", periodo: " noite para dia ", set: " sala ", sinopse: " TESTE ", paginas: "1 2/8" };
+const normalized = newDailySceneSchema.parse(creation);
+assert.equal(normalized.numero, "12A");
+assert.equal(normalized.periodo, "NOITE PARA DIA");
+assert.equal(normalized.set, "SALA");
+assert.equal(newDailySceneSchema.safeParse({ ...creation, numero: "   " }).success, false);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, paginas: "1/3" }).success, false);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, paginas: "1000" }).success, false);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, paginas: "" }).success, true);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, tipo: null }).success, true);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, requestId: "repetivel-mas-invalido" }).success, false);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, projectId: "outro-projeto" }).success, false);
+assert.equal(newDailySceneSchema.safeParse({ ...creation, characterIds: ["elenco-externo"] }).success, false);
+console.log("Nova cena pela diária: normalização, campos opcionais, oitavos, limite e escopo OK.");
